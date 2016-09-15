@@ -1,0 +1,14 @@
+[package]
+name = "textbox"
+version = "0.0.1"
+authors = ["Matthew O'Connor <thegreendragon@gmail.com>"]
+
+[dependencies]
+bitflags = "*"
+bit-set = "*"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { path = "../../winapi-rs" }
+wio = { path = "../../wio-rs" }
+
+[target.'cfg(unix)'.dependencies]

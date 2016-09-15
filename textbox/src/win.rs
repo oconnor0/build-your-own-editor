@@ -159,7 +159,7 @@ bitflags! {
       const FG_MAGENTA    = w::FOREGROUND_BLUE|w::FOREGROUND_RED,
       const FG_WHITE      = w::FOREGROUND_BLUE|w::FOREGROUND_GREEN
                           |w::FOREGROUND_RED,
-      const FG_BRIGHT = w::FOREGROUND_INTENSITY,
+      const FG_BRIGHT     = w::FOREGROUND_INTENSITY,
 
       const FG_BOLD       = 0,
       const FG_REVERSE    = w::COMMON_LVB_REVERSE_VIDEO,

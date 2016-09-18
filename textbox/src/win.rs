@@ -395,7 +395,8 @@ impl Textbox {
 fn to_event(input: Input) -> Option<Event> {
   match input {
     Input::Key {key_down, key_code, wide_char, control_key_state, ..} => {
-      if key_down {println!("{:?}", key_code);
+      if key_down {
+        println!("{:?}", key_code);
         let kc = match key_code {
           kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
           kc if kc == w::VK_LEFT as u16 => Key::Left,
@@ -407,8 +408,8 @@ fn to_event(input: Input) -> Option<Event> {
           kc if kc == w::VK_DELETE as u16 => Key::Delete,
           kc if kc == w::VK_HOME as u16 => Key::Home,
           kc if kc == w::VK_END as u16 => Key::End,
-          kc if kc == w::VK_PRIOR as u16 => Key::PageDown,
-          kc if kc == w::VK_NEXT as u16 => Key::PageUp,
+          kc if kc == w::VK_PRIOR as u16 => Key::PageUp,
+          kc if kc == w::VK_NEXT as u16 => Key::PageDown,
           kc if kc == w::VK_BACK as u16 => Key::Backspace,
           kc if kc == w::VK_TAB as u16 => Key::Tab,
           kc if kc == w::VK_RETURN as u16 => Key::Return,

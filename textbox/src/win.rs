@@ -63,55 +63,23 @@ bitflags! {
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum Key {
-  F1,
-  F2,
-  F3,
-  F4,
-  F5,
-  F6,
-  F7,
-  F8,
-  F9,
-  F10,
-  F11,
-  F12,
-  A,
-  B,
-  C,
-  D,
-  E,
-  F,
-  G,
-  H,
-  I,
-  J,
-  K,
-  L,
-  M,
-  N,
-  O,
-  P,
-  Q,
-  R,
-  S,
-  T,
-  U,
-  V,
-  W,
-  X,
-  Y,
-  Z,
-  Num0,
-  Num1,
-  Num2,
-  Num3,
-  Num4,
-  Num5,
-  Num6,
-  Num7,
-  Num8,
-  Num9,
+  F(u8),
+  Char(char),
+  // Num(u8),
+  Left,
+  Up,
+  Right,
+  Down,
   Escape,
+  Insert,
+  Delete,
+  Home,
+  End,
+  PageUp,
+  PageDown,
+  Backspace,
+  Tab,
+  Return,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -427,10 +395,32 @@ impl Textbox {
 fn to_event(input: Input) -> Option<Event> {
   match input {
     Input::Key {key_down, key_code, wide_char, control_key_state, ..} => {
-      if key_down {
+      if key_down {println!("{:?}", key_code);
         let kc = match key_code {
-          0x1B => Key::Escape,
-          _ => Key::A,
+          kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
+          kc if kc == w::VK_LEFT as u16 => Key::Left,
+          kc if kc == w::VK_UP as u16 => Key::Up,
+          kc if kc == w::VK_RIGHT as u16 => Key::Right,
+          kc if kc == w::VK_DOWN as u16 => Key::Down,
+          kc if kc == w::VK_DOWN as u16 => Key::Down,
+          kc if kc == w::VK_INSERT as u16 => Key::Insert,
+          kc if kc == w::VK_DELETE as u16 => Key::Delete,
+          kc if kc == w::VK_HOME as u16 => Key::Home,
+          kc if kc == w::VK_END as u16 => Key::End,
+          kc if kc == w::VK_PRIOR as u16 => Key::PageDown,
+          kc if kc == w::VK_NEXT as u16 => Key::PageUp,
+          kc if kc == w::VK_BACK as u16 => Key::Backspace,
+          kc if kc == w::VK_TAB as u16 => Key::Tab,
+          kc if kc == w::VK_RETURN as u16 => Key::Return,
+          kc if kc >= w::VK_F1 as u16 && kc <= w::VK_F24 as u16 => {
+            Key::F((kc - w::VK_F1 as u16 + 1) as u8)
+          }
+          // Doesn't handle shift.
+          // Letters
+          kc if kc >= 65 && kc <= 90 => Key::Char(kc as u8 as char),
+          // Numbers
+          kc if kc >= 48 && kc <= 57 => Key::Char(kc as u8 as char),
+          _ => Key::Char('\0'),
         };
         Some(Event::Key(wide_char as u8 as char,
                         Mod::from_bits_truncate(control_key_state),

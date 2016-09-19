@@ -396,7 +396,7 @@ fn to_event(input: Input) -> Option<Event> {
   match input {
     Input::Key {key_down, key_code, wide_char, control_key_state, ..} => {
       if key_down {
-        println!("{:?}", key_code);
+        // println!("{:?}", key_code);
         let kc = match key_code {
           kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
           kc if kc == w::VK_LEFT as u16 => Key::Left,

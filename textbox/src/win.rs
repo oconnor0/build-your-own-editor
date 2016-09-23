@@ -25,38 +25,38 @@ pub struct WinConsoleWrapper {
 fn to_fg(s: Style) -> u16 {
   use super::*;
 
-  let mut bg = w::FOREGROUND_RED | w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
+  let mut fg = 0;
 
   if s.contains(BRIGHT) {
-    bg |= w::FOREGROUND_INTENSITY
+    fg |= w::FOREGROUND_INTENSITY
   }
   if s.contains(BOLD) {
-    bg |= w::FOREGROUND_INTENSITY;
+    fg |= w::FOREGROUND_INTENSITY;
   }
   if s.contains(REVERSE) {
-    bg |= w::COMMON_LVB_REVERSE_VIDEO
+    fg |= w::COMMON_LVB_REVERSE_VIDEO
   }
   if s.contains(UNDERLINE) {
-    bg |= w::COMMON_LVB_UNDERSCORE
+    fg |= w::COMMON_LVB_UNDERSCORE
   }
 
   if s.contains(WHITE) {
-    bg |= w::FOREGROUND_RED | w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
+    fg |= w::FOREGROUND_RED | w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
   } else if s.contains(MAGENTA) {
-    bg |= w::FOREGROUND_RED | w::FOREGROUND_BLUE;
+    fg |= w::FOREGROUND_RED | w::FOREGROUND_BLUE;
   } else if s.contains(CYAN) {
-    bg |= w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
+    fg |= w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
   } else if s.contains(YELLOW) {
-    bg |= w::FOREGROUND_RED | w::FOREGROUND_GREEN;
+    fg |= w::FOREGROUND_RED | w::FOREGROUND_GREEN;
   } else if s.contains(BLUE) {
-    bg |= w::FOREGROUND_BLUE;
+    fg |= w::FOREGROUND_BLUE;
   } else if s.contains(GREEN) {
-    bg |= w::FOREGROUND_GREEN;
+    fg |= w::FOREGROUND_GREEN;
   } else if s.contains(RED) {
-    bg |= w::FOREGROUND_RED;
+    fg |= w::FOREGROUND_RED;
   }
 
-  bg
+  fg
 }
 
 fn to_bg(s: Style) -> u16 {

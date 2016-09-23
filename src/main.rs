@@ -38,79 +38,88 @@ impl Buffer {
         break;
       }
       // let mut initial_spaces = true;
-      for (col, ch) in line.chars().enumerate() {
-        if col >= self.view_size.col() {
-          break;
-        } else if ch == ' ' {
-          tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | BLACK, BLACK);
-        } else {
-          // initial_spaces = false;
-          tbox.set_cell(Coord(col, row), ch, WHITE, BLACK);
+      if self.offset.col() < line.len() {
+        for (col, ch) in line[self.offset.col()..].chars().enumerate() {
+          if col >= self.view_size.col() {
+            break;
+          } else if ch == ' ' {
+            tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | BLACK, BLACK);
+          } else {
+            // initial_spaces = false;
+            tbox.set_cell(Coord(col, row), ch, WHITE, BLACK);
+          }
         }
       }
     }
   }
 
-  fn cursor_down(&mut self) -> bool {
+  fn cursor_down(&mut self) {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
       // do nothing
-      false
     } else if self.cursor.row() >= self.view_size.row() - 1 {
       self.cursor.1 = self.view_size.row() - 1;
       self.offset.1 += 1;
-      true
     } else {
       self.cursor.1 += 1;
-      true
     }
   }
 
-  fn page_down(&mut self) -> bool {
+  fn page_down(&mut self) {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
-      false
+      // do nothing
     } else if self.lines.len() < self.view_size.row() {
       self.cursor.1 = self.lines.len() - 1;
-      true
     } else if self.offset.row() == self.lines.len() - self.view_size.row() {
       self.cursor.1 = self.view_size.row() - 1;
-      true
     } else if self.offset.row() >= self.lines.len() - 2 * self.view_size.row() {
       self.offset.1 = self.lines.len() - self.view_size.row();
-      true
     } else {
       self.offset.1 += self.view_size.row();
-      true
     }
   }
 
-  fn cursor_up(&mut self) -> bool {
+  fn cursor_up(&mut self) {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
-      false
     } else if self.cursor.row() == 0 {
       self.offset.1 -= 1;
-      true
     } else {
       self.cursor.1 -= 1;
-      true
     }
   }
 
-  fn page_up(&mut self) -> bool {
+  fn page_up(&mut self) {
     if self.offset.row() + self.cursor.row() == 0 {
-      false
+      // do nothing
     } else if self.offset.1 == 0 {
       self.cursor.1 = 0;
-      true
     } else if self.offset.row() <= self.view_size.row() - 1 {
       if self.cursor.row() > self.view_size.row() - self.offset.row() {
         self.cursor.1 -= self.view_size.row() - self.offset.row();
       }
       self.offset.1 = 0;
-      true
     } else {
       self.offset.1 -= self.view_size.row();
-      true
+    }
+  }
+
+  fn home(&mut self) {
+    self.offset.0 = 0;
+    self.cursor.0 = 0;
+  }
+
+  fn end(&mut self) {
+    let offset_row = self.offset.1;
+    let cursor_row = self.cursor.1;
+    let view_cols = self.view_size.0;
+    let line_len = self.lines[offset_row + cursor_row].len();
+
+    if view_cols >= line_len {
+      self.offset.0 = 0;
+      self.cursor.0 = line_len;
+    } else {
+      self.offset.0 = line_len + 1 - view_cols;
+      self.cursor.0 = view_cols - 1;
     }
   }
 }
@@ -139,10 +148,12 @@ fn main() {
       {
         match tbox.pop_event() {
           Some(Event::Key(_, _, Key::Escape)) => return,
-          Some(Event::Key(_, _, Key::PageUp)) => changed = buf.page_up(),
-          Some(Event::Key(_, _, Key::Up)) => changed = buf.cursor_up(),
-          Some(Event::Key(_, _, Key::Down)) => changed = buf.cursor_down(),
-          Some(Event::Key(_, _, Key::PageDown)) => changed = buf.page_down(),
+          Some(Event::Key(_, _, Key::PageUp)) => { buf.page_up(); changed = true; }
+          Some(Event::Key(_, _, Key::Up)) => { buf.cursor_up(); changed = true; }
+          Some(Event::Key(_, _, Key::Down)) => { buf.cursor_down(); changed = true; }
+          Some(Event::Key(_, _, Key::PageDown)) => { buf.page_down(); changed = true; }
+          Some(Event::Key(_, _, Key::End)) => { buf.end(); changed = true; }
+          Some(Event::Key(_, _, Key::Home)) => { buf.home(); changed = true; }
           Some(Event::Key(c, k, m)) => {
             println!("({:?}, {:?}, {:?})", c, k, m);
             ch = c;

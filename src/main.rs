@@ -124,8 +124,7 @@ fn main() {
   tbox.clear();
   tbox.present();
 
-  let mut buf = Buffer::from_file(Coord(cols, rows - 2), "src/main.rs");
-  // let mut buf = Buffer::from_file((cols, rows - 2), "Cargo.toml");
+  let mut buf = Buffer::from_file(size - 2.to_row(), "src/main.rs");
   buf.paint(&mut tbox, zero());
   for col in 0..cols {
     tbox.set_cell(Coord(col, rows - 2), ' ', BLACK, WHITE);

@@ -4,7 +4,7 @@ extern crate bit_set;
 extern crate num_traits;
 
 mod types {
-  use std::ops::Add;
+  use std::ops::{Add, Sub};
   pub use num_traits::{zero, Zero};
   use std::result;
 
@@ -23,9 +23,30 @@ mod types {
     fn add(self, rhs: Coord) -> Coord { Coord(self.0 + rhs.0, self.1 + rhs.1) }
   }
 
+  impl Sub for Coord {
+    type Output = Self;
+    fn sub(self, rhs: Coord) -> Coord { Coord(self.0 - rhs.0, self.1 - rhs.1) }
+  }
+
   impl Zero for Coord {
     fn zero() -> Self { Coord(0, 0) }
     fn is_zero(&self) -> bool { self.0 == 0 && self.1 == 0 }
+  }
+
+  pub trait ToCol {
+    fn to_col(&self) -> Coord;
+  }
+
+  impl ToCol for usize {
+    fn to_col(&self) -> Coord { Coord(*self, 0) }
+  }
+
+  pub trait ToRow {
+    fn to_row(&self) -> Coord;
+  }
+
+  impl ToRow for usize {
+    fn to_row(&self) -> Coord { Coord(0, *self) }
   }
 
   #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

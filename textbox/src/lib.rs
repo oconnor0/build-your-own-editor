@@ -166,6 +166,12 @@ mod types {
       self.put_cell(coord, Cell { ch: ch, fg: fg, bg: bg })
     }
 
+    fn set_cells(&mut self, coord: Coord, chs: &str, fg: Style, bg: Style) {
+      for (i, ch) in chs.chars().enumerate() {
+        self.set_cell(coord + i.to_col(), ch, fg, bg);
+      }
+    }
+
     fn set_input_mode(&mut self, _: InputMode) -> InputMode;
     fn set_output_mode(&mut self, _: OutputMode) -> OutputMode;
 

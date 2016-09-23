@@ -1,9 +1,10 @@
 #![allow(dead_code)]
 extern crate textbox;
 use textbox::*;
+use std::path::PathBuf;
 
 struct Buffer {
-  // filename: String,
+  path: Option<PathBuf>,
   lines: Vec<String>,
   offset: Coord,
   cursor: Coord,
@@ -15,7 +16,8 @@ impl Buffer {
     use std::io::{BufRead, BufReader};
     use std::fs::File;
 
-    let file = File::open(filename).unwrap();
+    let path = PathBuf::from(filename);
+    let file = File::open(path.as_path()).unwrap();
     let bufr = BufReader::new(&file);
     let mut lines = vec![];
     for line in bufr.lines() {
@@ -23,10 +25,18 @@ impl Buffer {
     }
 
     Buffer {
+      path: Some(path),
       lines: lines,
       offset: zero(),
       cursor: zero(),
       view_size: view_size,
+    }
+  }
+
+  fn name(&self) -> &str {
+    match self.path {
+      Some(ref path) => path.to_str().unwrap(),
+      None => "-- buffer --",
     }
   }
 
@@ -138,12 +148,20 @@ fn main() {
   for col in 0..cols {
     tbox.set_cell(Coord(col, rows - 2), ' ', BLACK, WHITE);
   }
+  tbox.set_cells(Coord(2, rows - 2), buf.name(), BLACK, WHITE);
+  let pos = format!("{}/{}",
+                    buf.offset.1 + buf.cursor.1 + 1,
+                    buf.lines.len());
+  tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
+                 &pos,
+                 WHITE,
+                 BLACK | REVERSE);
   tbox.present();
 
   {
-    let mut ch = ' ';
+    // let mut ch = ' ';
     let mut changed = false;
-    let mut x = 0;
+    // let mut x = 0;
     loop {
       {
         match tbox.pop_event() {
@@ -174,7 +192,7 @@ fn main() {
           }
           Some(Event::Key(c, k, m)) => {
             println!("({:?}, {:?}, {:?})", c, k, m);
-            ch = c;
+            // ch = c;
             changed = true;
           }
           _ => (),
@@ -187,11 +205,22 @@ fn main() {
           for col in 0..cols {
             tbox.set_cell(Coord(col, rows - 2), ' ', WHITE, BLACK | REVERSE);
           }
-          tbox.set_cell(Coord(x, rows - 1), ch, WHITE, BLACK);
+          tbox.set_cells(Coord(2, rows - 2),
+                         buf.name(),
+                         WHITE,
+                         BLACK | REVERSE);
+          let pos = format!("{}/{}",
+                            buf.offset.1 + buf.cursor.1 + 1,
+                            buf.lines.len());
+          tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
+                         &pos,
+                         WHITE,
+                         BLACK | REVERSE);
+          // tbox.set_cell(Coord(x, rows - 1), ch, WHITE, BLACK);
           changed = false;
           // tbox.set_cursor(x + 1, rows - 1);
           tbox.present();
-          x += 1;
+          // x += 1;
         }
       }
     }

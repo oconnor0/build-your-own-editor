@@ -98,6 +98,40 @@ impl Buffer {
     }
   }
 
+  fn cursor_right(&mut self) {
+    let offset_row = self.offset.1;
+    let cursor_row = self.cursor.1;
+    let view_cols = self.view_size.0;
+    let line_len = self.lines[offset_row + cursor_row].len();
+
+    if self.offset.0 + self.cursor.0 >= line_len {
+      if offset_row + cursor_row < self.lines.len() - 1 {
+        self.cursor_down();
+        self.home();
+      } else {
+        self.end();
+      }
+    } else if self.cursor.0 >= view_cols - 1 {
+      self.offset.0 += 1;
+      self.cursor.0 = view_cols - 1;
+    } else {
+      self.cursor.0 += 1;
+    }
+  }
+
+  fn cursor_left(&mut self) {
+    if self.offset.0 + self.cursor.0 == 0 {
+      if self.offset.1 + self.cursor.1 > 0 {
+        self.cursor_up();
+        self.end();
+      }
+    } else if self.cursor.0 == 0 {
+      self.offset.0 -= 1;
+    } else {
+      self.cursor.0 -= 1;
+    }
+  }
+
   fn page_up(&mut self) {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
@@ -153,15 +187,15 @@ fn main() {
   //                WHITE,
   //                BLACK | REVERSE);
   let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-            buf.name(),
-            buf.offset.0 + buf.cursor.0 + 1,
-            buf.lines[buf.offset.1 + buf.cursor.1].len(),
-            buf.offset.1 + buf.cursor.1 + 1,
-            buf.lines.len());
+                    buf.name(),
+                    buf.offset.0 + buf.cursor.0 + 1,
+                    buf.lines[buf.offset.1 + buf.cursor.1].len(),
+                    buf.offset.1 + buf.cursor.1 + 1,
+                    buf.lines.len());
   tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
-               &pos,
-               WHITE,
-               BLACK | REVERSE);
+                 &pos,
+                 WHITE,
+                 BLACK | REVERSE);
   tbox.present();
 
   {
@@ -182,6 +216,14 @@ fn main() {
           }
           Some(Event::Key(_, _, Key::Down)) => {
             buf.cursor_down();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::Left)) => {
+            buf.cursor_left();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::Right)) => {
+            buf.cursor_right();
             changed = true;
           }
           Some(Event::Key(_, _, Key::PageDown)) => {
@@ -216,11 +258,11 @@ fn main() {
           //                WHITE,
           //                BLACK | REVERSE);
           let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-                    buf.name(),
-                    buf.offset.0 + buf.cursor.0 + 1,
-                    buf.lines[buf.offset.1 + buf.cursor.1].len(),
-                    buf.offset.1 + buf.cursor.1 + 1,
-                    buf.lines.len());
+                            buf.name(),
+                            buf.offset.0 + buf.cursor.0 + 1,
+                            buf.lines[buf.offset.1 + buf.cursor.1].len(),
+                            buf.offset.1 + buf.cursor.1 + 1,
+                            buf.lines.len());
           tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
                          &pos,
                          WHITE,

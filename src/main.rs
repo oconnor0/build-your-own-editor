@@ -148,12 +148,30 @@ fn main() {
       {
         match tbox.pop_event() {
           Some(Event::Key(_, _, Key::Escape)) => return,
-          Some(Event::Key(_, _, Key::PageUp)) => { buf.page_up(); changed = true; }
-          Some(Event::Key(_, _, Key::Up)) => { buf.cursor_up(); changed = true; }
-          Some(Event::Key(_, _, Key::Down)) => { buf.cursor_down(); changed = true; }
-          Some(Event::Key(_, _, Key::PageDown)) => { buf.page_down(); changed = true; }
-          Some(Event::Key(_, _, Key::End)) => { buf.end(); changed = true; }
-          Some(Event::Key(_, _, Key::Home)) => { buf.home(); changed = true; }
+          Some(Event::Key(_, _, Key::PageUp)) => {
+            buf.page_up();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::Up)) => {
+            buf.cursor_up();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::Down)) => {
+            buf.cursor_down();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::PageDown)) => {
+            buf.page_down();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::End)) => {
+            buf.end();
+            changed = true;
+          }
+          Some(Event::Key(_, _, Key::Home)) => {
+            buf.home();
+            changed = true;
+          }
           Some(Event::Key(c, k, m)) => {
             println!("({:?}, {:?}, {:?})", c, k, m);
             ch = c;

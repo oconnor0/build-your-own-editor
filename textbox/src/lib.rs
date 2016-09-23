@@ -49,27 +49,28 @@ mod types {
     pub flags Mod: u32 {
       const NO_MODS     = 0,
 
-      const RIGHT_ALT   = 1,
-      const LEFT_ALT    = 2,
+      const RIGHT_ALT   = 0x0001,
+      const LEFT_ALT    = 0x0002,
       const ALT         = RIGHT_ALT.bits|LEFT_ALT.bits,
 
-      const RIGHT_CTRL  = 4,
-      const LEFT_CTRL   = 8,
+      const RIGHT_CTRL  = 0x0004,
+      const LEFT_CTRL   = 0x0008,
       const CTRL        = RIGHT_CTRL.bits|LEFT_CTRL.bits,
 
-      const SHIFT       = 16,
-      const CAPS_LOCK   = 32,
-      const NUM_LOCK    = 64,
-      const SCROLL_LOCK = 128,
-      const ENHANCED    = 256,
+      const SHIFT       = 0x0010,
+      const CAPS_LOCK   = 0x0020,
+      const NUM_LOCK    = 0x0040,
+      const SCROLL_LOCK = 0x0080,
+      const META        = 0x0100,
+      const MENU        = 0x0200,
     }
   }
+
 
   #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
   pub enum Key {
     F(u8),
     Char(char),
-    // Num(u8),
     Left,
     Up,
     Right,
@@ -91,25 +92,24 @@ mod types {
     Key(char, Mod, Key),
   }
 
-
   bitflags! {
-    pub flags Style: u16 {
-      const DEFAULT   = 0,
+     pub flags Style: u16 {
+       const DEFAULT   = 0,
 
-      const BLACK     = 0x0001,
-      const RED       = 0x0002,
-      const GREEN     = 0x0004,
-      const YELLOW    = 0x0008,
-      const BLUE      = 0x0010,
-      const MAGENTA   = 0x0020,
-      const CYAN      = 0x0040,
-      const WHITE     = 0x0080,
-      const BRIGHT    = 0x0100,
+       const BLACK     = 0x0001,
+       const RED       = 0x0002,
+       const GREEN     = 0x0004,
+       const YELLOW    = 0x0008,
+       const BLUE      = 0x0010,
+       const MAGENTA   = 0x0020,
+       const CYAN      = 0x0040,
+       const WHITE     = 0x0080,
+       const BRIGHT    = 0x0100,
 
-      const BOLD      = 0x0200,
-      const UNDERLINE = 0x0400,
-      const REVERSE   = 0x0800,
-    }
+       const BOLD      = 0x0200,
+       const UNDERLINE = 0x0400,
+       const REVERSE   = 0x0800,
+     }
   }
 
   #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -123,11 +123,14 @@ mod types {
   {
     fn init() -> Result<Self> where Self: Sized;
 
-    fn rows(&self) -> usize;
-    fn cols(&self) -> usize;
+    #[inline]
+    fn cols(&self) -> usize { self.size().0 }
+    #[inline]
+    fn rows(&self) -> usize { self.size().1 }
+    #[inline]
     fn size(&self) -> Coord;
 
-    fn set_clear_style(&mut self, fg_clear: Style, bg_clear: Style);
+    fn set_clear_style(&mut self, fg: Style, bg: Style);
     fn clear(&mut self);
 
     fn present(&mut self);
@@ -135,8 +138,12 @@ mod types {
     fn set_cursor(&mut self, coord: Coord);
     fn hide_cursor(&mut self);
 
+    #[inline]
     fn put_cell(&mut self, coord: Coord, cell: Cell);
-    fn set_cell(&mut self, coord: Coord, ch: char, fg: Style, bg: Style);
+    #[inline]
+    fn set_cell(&mut self, coord: Coord, ch: char, fg: Style, bg: Style) {
+      self.put_cell(coord, Cell { ch: ch, fg: fg, bg: bg })
+    }
 
     fn set_input_mode(&mut self, _: InputMode) -> InputMode;
     fn set_output_mode(&mut self, _: OutputMode) -> OutputMode;
@@ -156,7 +163,5 @@ pub type TextboxImpl = nix::TermboxWrapper;
 mod win;
 #[cfg(windows)]
 pub use win::*;
-
-// pub fn init() -> Result<TextboxImpl> {
-//   TextboxImpl::init()
-// }
+#[cfg(windows)]
+pub type TextboxImpl = win::WinConsoleWrapper;

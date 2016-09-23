@@ -41,7 +41,7 @@ impl Buffer {
       for (col, ch) in line.chars().enumerate() {
         if col >= self.view_size.col() {
           break;
-        } else if /*initial_spaces &&*/ ch == ' ' {
+        } else if ch == ' ' {
           tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | BLACK, BLACK);
         } else {
           // initial_spaces = false;
@@ -71,7 +71,7 @@ impl Buffer {
     } else if self.lines.len() < self.view_size.row() {
       self.cursor.1 = self.lines.len() - 1;
       true
-    } else if self.offset.row() == self.lines.len() - self.view_size.row()  {
+    } else if self.offset.row() == self.lines.len() - self.view_size.row() {
       self.cursor.1 = self.view_size.row() - 1;
       true
     } else if self.offset.row() >= self.lines.len() - 2 * self.view_size.row() {

@@ -1,9 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
-#[cfg(windows)]
 extern crate winapi;
-#[cfg(windows)]
 extern crate wio;
 
 use bit_set::BitSet;
@@ -12,34 +10,7 @@ use std::result;
 use self::wio::console::{CharInfo, Input, InputBuffer, ScreenBuffer};
 use self::winapi as w;
 
-type Result<T> = result::Result<T, String>;
-
-bitflags! {
-  pub flags Style: u16 {
-    const DEFAULT   = 0,
-
-    const BLACK     = 0x0001,
-    const RED       = 0x0002,
-    const GREEN     = 0x0004,
-    const YELLOW    = 0x0008,
-    const BLUE      = 0x0010,
-    const MAGENTA   = 0x0020,
-    const CYAN      = 0x0040,
-    const WHITE     = 0x0080,
-    const BRIGHT    = 0x0100,
-
-    const BOLD      = 0x0200,
-    const UNDERLINE = 0x0400,
-    const REVERSE   = 0x0800,
-  }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct Cell {
-  pub ch: char,
-  pub fg: Style,
-  pub bg: Style,
-}
+pub use types::*;
 
 bitflags! {
   pub flags Mod: u32 {
@@ -61,32 +32,6 @@ bitflags! {
   }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Key {
-  F(u8),
-  Char(char),
-  // Num(u8),
-  Left,
-  Up,
-  Right,
-  Down,
-  Escape,
-  Insert,
-  Delete,
-  Home,
-  End,
-  PageUp,
-  PageDown,
-  Backspace,
-  Tab,
-  Return,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Event {
-  Key(char, Mod, Key),
-}
-
 pub struct Textbox {
   stdin: InputBuffer,
   events: VecDeque<Input>,
@@ -97,23 +42,6 @@ pub struct Textbox {
   cols: usize,
   fg_clear: Style,
   bg_clear: Style,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum InputMode {
-  Current,
-  Esc,
-  Alt,
-  Mouse,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum OutputMode {
-  Current,
-  Normal,
-  Colors256,
-  Colors216,
-  Grayscale,
 }
 
 bitflags! {
@@ -262,7 +190,7 @@ impl Textbox {
       fg: DEFAULT,
       bg: DEFAULT,
       }; cell_count]
-                    .into_boxed_slice();
+      .into_boxed_slice();
     frontbuf.set_active().unwrap();
     // println!("{} * {} = {}", cols, rows, cell_count);
     Ok(Textbox {
@@ -301,22 +229,22 @@ impl Textbox {
   pub fn present(&mut self) {
     if self.dirty_rows.len() == self.rows {
       let slice: Vec<CharInfo> = self.backbuf
-                                     .iter()
-                                     .map(|&cell| CharInfo::from(cell))
-                                     .collect();
+        .iter()
+        .map(|&cell| CharInfo::from(cell))
+        .collect();
       self.frontbuf
-          .write_output(&slice, (self.cols as i16, self.rows as i16), (0, 0))
-          .unwrap();
+        .write_output(&slice, (self.cols as i16, self.rows as i16), (0, 0))
+        .unwrap();
     } else {
       for row in self.dirty_rows.iter() {
         let slice: Vec<CharInfo> = self.backbuf[row * self.cols..(row + 1) *
                                                                  self.cols]
-                                     .iter()
-                                     .map(|&cell| CharInfo::from(cell))
-                                     .collect();
+          .iter()
+          .map(|&cell| CharInfo::from(cell))
+          .collect();
         self.frontbuf
-            .write_output(&slice, (self.cols as i16, 1), (0, row as i16))
-            .unwrap();
+          .write_output(&slice, (self.cols as i16, 1), (0, row as i16))
+          .unwrap();
       }
     }
     self.dirty_rows.clear()
@@ -394,7 +322,7 @@ impl Textbox {
 
 fn to_event(input: Input) -> Option<Event> {
   match input {
-    Input::Key {key_down, key_code, wide_char, control_key_state, ..} => {
+    Input::Key { key_down, key_code, wide_char, control_key_state, .. } => {
       if key_down {
         // println!("{:?}", key_code);
         let kc = match key_code {

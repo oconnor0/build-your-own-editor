@@ -148,14 +148,20 @@ fn main() {
   for col in 0..cols {
     tbox.set_cell(Coord(col, rows - 2), ' ', BLACK, WHITE);
   }
-  tbox.set_cells(Coord(2, rows - 2), buf.name(), BLACK, WHITE);
-  let pos = format!("{}/{}",
-                    buf.offset.1 + buf.cursor.1 + 1,
-                    buf.lines.len());
+  // tbox.set_cells(Coord(2, rows - 2),
+  //                buf.name(),
+  //                WHITE,
+  //                BLACK | REVERSE);
+  let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
+            buf.name(),
+            buf.offset.0 + buf.cursor.0 + 1,
+            buf.lines[buf.offset.1 + buf.cursor.1].len(),
+            buf.offset.1 + buf.cursor.1 + 1,
+            buf.lines.len());
   tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
-                 &pos,
-                 WHITE,
-                 BLACK | REVERSE);
+               &pos,
+               WHITE,
+               BLACK | REVERSE);
   tbox.present();
 
   {
@@ -205,13 +211,16 @@ fn main() {
           for col in 0..cols {
             tbox.set_cell(Coord(col, rows - 2), ' ', WHITE, BLACK | REVERSE);
           }
-          tbox.set_cells(Coord(2, rows - 2),
-                         buf.name(),
-                         WHITE,
-                         BLACK | REVERSE);
-          let pos = format!("{}/{}",
-                            buf.offset.1 + buf.cursor.1 + 1,
-                            buf.lines.len());
+          // tbox.set_cells(Coord(2, rows - 2),
+          //                buf.name(),
+          //                WHITE,
+          //                BLACK | REVERSE);
+          let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
+                    buf.name(),
+                    buf.offset.0 + buf.cursor.0 + 1,
+                    buf.lines[buf.offset.1 + buf.cursor.1].len(),
+                    buf.offset.1 + buf.cursor.1 + 1,
+                    buf.lines.len());
           tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
                          &pos,
                          WHITE,

@@ -70,20 +70,20 @@ mod types {
     pub flags Mod: u32 {
       const NO_MODS     = 0,
 
-      const RIGHT_ALT   = 0x0001,
-      const LEFT_ALT    = 0x0002,
-      const ALT         = RIGHT_ALT.bits|LEFT_ALT.bits,
+      // const RIGHT_ALT   = 0x0001,
+      // const LEFT_ALT    = 0x0002,
+      const ALT         = 0x0003, //RIGHT_ALT.bits|LEFT_ALT.bits,
 
-      const RIGHT_CTRL  = 0x0004,
-      const LEFT_CTRL   = 0x0008,
-      const CTRL        = RIGHT_CTRL.bits|LEFT_CTRL.bits,
+      // const RIGHT_CTRL  = 0x0004,
+      // const LEFT_CTRL   = 0x0008,
+      const CTRL        = 0x000c, //RIGHT_CTRL.bits|LEFT_CTRL.bits,
 
       const SHIFT       = 0x0010,
-      const CAPS_LOCK   = 0x0020,
-      const NUM_LOCK    = 0x0040,
-      const SCROLL_LOCK = 0x0080,
-      const META        = 0x0100,
-      const MENU        = 0x0200,
+      // const CAPS_LOCK   = 0x0020,
+      // const NUM_LOCK    = 0x0040,
+      // const SCROLL_LOCK = 0x0080,
+      // const META        = 0x0100,
+      // const MENU        = 0x0200,
     }
   }
 

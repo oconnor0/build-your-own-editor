@@ -98,6 +98,48 @@ fn to_bg(s: Style) -> u16 {
   bg
 }
 
+fn to_mod(raw: u32) -> Mod {
+  let mut m = NO_MODS;
+
+  if raw & w::RIGHT_ALT_PRESSED > 0 {
+    m |= ALT
+  }
+  if raw & w::LEFT_ALT_PRESSED > 0 {
+    m |= ALT
+  }
+
+  if raw & w::RIGHT_CTRL_PRESSED > 0 {
+    m |= CTRL
+  }
+  if raw & w::LEFT_CTRL_PRESSED > 0 {
+    m |= CTRL
+  }
+
+  if raw & w::SHIFT_PRESSED > 0 {
+    m |= SHIFT
+  }
+  // if raw & w::CAPSLOCK_ON > 0 {
+  //   m |= CAPS_LOCK
+  // }
+  // if raw & w::NUMLOCK_ON > 0 {
+  //   m |= NUM_LOCK
+  // }
+  // if raw & w::SCROLLLOCK_ON > 0 {
+  //   m |= SCROLL_LOCK
+  // }
+
+  // META
+  // MENU
+  // if raw & w::RIGHT_CTRL_PRESSED > 0 {
+  //   m |= RIGHT_CTRL
+  // }
+  // if raw & w::LEFT_CTRL_PRESSED > 0 {
+  //   m |= LEFT_CTRL
+  // }
+
+  m
+}
+
 fn to_charinfo(c: Cell) -> CharInfo {
   CharInfo::new(c.ch as u16, to_fg(c.fg) | to_bg(c.bg))
 }
@@ -106,7 +148,7 @@ fn to_event(input: Input) -> Option<Event> {
   match input {
     Input::Key { key_down, key_code, wide_char, control_key_state, .. } => {
       if key_down {
-        // println!("{:?}", key_code);
+        println!("{:?}", key_code);
         let kc = match key_code {
           kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
           kc if kc == w::VK_LEFT as u16 => Key::Left,
@@ -133,9 +175,7 @@ fn to_event(input: Input) -> Option<Event> {
           kc if kc >= 48 && kc <= 57 => Key::Char(kc as u8 as char),
           _ => Key::Char('\0'),
         };
-        Some(Event::Key(wide_char as u8 as char,
-                        Mod::from_bits_truncate(control_key_state),
-                        kc))
+        Some(Event::Key(wide_char as u8 as char, to_mod(control_key_state), kc))
       } else {
         None
       }
@@ -231,7 +271,7 @@ impl Textbox for WinConsoleWrapper {
   fn pop_event(&mut self) -> Option<Event> {
     if self.events.len() > 0 {
       to_event(self.events.pop_front().unwrap())
-    } else if self.stdin.available_input().unwrap_or(0) > 0 {
+    } else /*if self.stdin.available_input().unwrap_or(0) > 0*/ {
       match self.stdin.read_input() {
         Ok(inputs) => {
           self.events.extend(inputs);
@@ -239,8 +279,8 @@ impl Textbox for WinConsoleWrapper {
         }
         Err(_) => None,
       }
-    } else {
-      None
+    // } else {
+    //   None
     }
   }
 }

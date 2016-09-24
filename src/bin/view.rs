@@ -206,8 +206,10 @@ fn main() {
       // let mut x = 0;
       'event_loop: loop {
         {
-          match tbox.pop_event() {
-            Some(Event::Key(_, CTRL, Key::Char('q'))) => break 'arg_loop,
+          let e = tbox.pop_event();
+          println!("{:?}", e);
+          match e {
+            Some(Event::Key(_, CTRL, Key::Char('Q'))) => break 'arg_loop,
             Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,
             Some(Event::Key(_, _, Key::PageUp)) => {
               buf.page_up();

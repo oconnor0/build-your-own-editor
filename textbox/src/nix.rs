@@ -85,7 +85,7 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       // kc if kc >= 48 && kc <= 57 => Key::Char(kc as u8 as char),
       _ => Key::Char('\0'),
     };
-    Some(Event::Key(raw.ch as u8 as char, mods, kc))
+    Some(Event::Key(char::from_u32(raw.ch).unwrap(), mods, kc))
   } else {
     None
   }

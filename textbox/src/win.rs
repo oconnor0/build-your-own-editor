@@ -40,7 +40,7 @@ fn to_fg(s: Style) -> u16 {
     fg |= w::COMMON_LVB_UNDERSCORE
   }
 
-  if s.contains(WHITE) {
+  if s.contains(WHITE) || s.contains(DEFAULT) {
     fg |= w::FOREGROUND_RED | w::FOREGROUND_GREEN | w::FOREGROUND_BLUE;
   } else if s.contains(MAGENTA) {
     fg |= w::FOREGROUND_RED | w::FOREGROUND_BLUE;
@@ -54,6 +54,8 @@ fn to_fg(s: Style) -> u16 {
     fg |= w::FOREGROUND_GREEN;
   } else if s.contains(RED) {
     fg |= w::FOREGROUND_RED;
+  } else if s.contains(BLACK) {
+    // do nothing
   }
 
   fg
@@ -149,7 +151,7 @@ impl Textbox for WinConsoleWrapper {
     let (cols, rows) = frontbuf.info().unwrap().size();
     let cell_count = (rows * cols) as usize;
     let backbuf = vec![Cell { ch: ' ', fg: DEFAULT, bg: DEFAULT, }; cell_count]
-                    .into_boxed_slice();
+      .into_boxed_slice();
     frontbuf.set_active().unwrap();
     Ok(WinConsoleWrapper {
       stdin: stdin,
@@ -183,24 +185,22 @@ impl Textbox for WinConsoleWrapper {
   fn present(&mut self) {
     if self.dirty_rows.len() == self.size.1 {
       let slice: Vec<CharInfo> = self.backbuf
-                                     .iter()
-                                     .map(|&cell| to_charinfo(cell))
-                                     .collect();
+        .iter()
+        .map(|&cell| to_charinfo(cell))
+        .collect();
       self.frontbuf
-          .write_output(&slice,
-                        (self.size.0 as i16, self.size.1 as i16),
-                        (0, 0))
-          .unwrap();
+        .write_output(&slice, (self.size.0 as i16, self.size.1 as i16), (0, 0))
+        .unwrap();
     } else {
       for row in self.dirty_rows.iter() {
         let slice: Vec<CharInfo> = self.backbuf[row * self.size.0..(row + 1) *
                                                                    self.size.0]
-                                     .iter()
-                                     .map(|&cell| to_charinfo(cell))
-                                     .collect();
+          .iter()
+          .map(|&cell| to_charinfo(cell))
+          .collect();
         self.frontbuf
-            .write_output(&slice, (self.size.0 as i16, 1), (0, row as i16))
-            .unwrap();
+          .write_output(&slice, (self.size.0 as i16, 1), (0, row as i16))
+          .unwrap();
       }
     }
     self.dirty_rows.clear()
@@ -210,8 +210,8 @@ impl Textbox for WinConsoleWrapper {
     // TODO: Should this make these changes to the backbuf?
     if coord.0 < self.size.0 && coord.1 < self.size.1 {
       self.frontbuf
-          .set_cursor_position((coord.0 as i16, coord.1 as i16))
-          .unwrap()
+        .set_cursor_position((coord.0 as i16, coord.1 as i16))
+        .unwrap()
     }
   }
   fn hide_cursor(&mut self) { unimplemented!() }

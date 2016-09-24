@@ -115,7 +115,7 @@ mod types {
 
   bitflags! {
      pub flags Style: u16 {
-       const DEFAULT   = 0,
+       const DEFAULT   = 0x8000,
 
        const BLACK     = 0x0001,
        const RED       = 0x0002,
@@ -140,8 +140,7 @@ mod types {
     pub bg: Style,
   }
 
-  pub trait Textbox
-  {
+  pub trait Textbox {
     fn init() -> Result<Self> where Self: Sized;
 
     #[inline]

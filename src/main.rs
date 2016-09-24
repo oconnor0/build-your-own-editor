@@ -52,11 +52,11 @@ impl Buffer {
         for (col, ch) in line[self.offset.col()..].chars().enumerate() {
           if col >= self.view_size.col() {
             break;
-          } else if ch == ' ' {
-            tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | BLACK, BLACK);
+            // } else if ch == ' ' {
+            //   tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | DEFAULT, DEFAULT);
           } else {
             // initial_spaces = false;
-            tbox.set_cell(Coord(col, row), ch, WHITE, BLACK);
+            tbox.set_cell(Coord(col, row), ch, DEFAULT, DEFAULT);
           }
         }
       }
@@ -75,16 +75,16 @@ impl Buffer {
   }
 
   fn page_down(&mut self) {
-    if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
+    if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
       // do nothing
     } else if self.lines.len() < self.view_size.row() {
       self.cursor.1 = self.lines.len() - 1;
-    } else if self.offset.row() == self.lines.len() - self.view_size.row() {
-      self.cursor.1 = self.view_size.row() - 1;
-    } else if self.offset.row() >= self.lines.len() - 2 * self.view_size.row() {
-      self.offset.1 = self.lines.len() - self.view_size.row();
     } else {
-      self.offset.1 += self.view_size.row();
+      self.offset.1 += self.view_size.1;
+      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
+        self.offset.1 = self.lines.len() - self.view_size.1;
+        self.cursor.1 = self.view_size.1 - 1;
+      }
     }
   }
 
@@ -173,19 +173,19 @@ fn main() {
   let size = tbox.size();
   let Coord(cols, rows) = size;
   // tbox.set_cursor(0, rows - 1);
-  tbox.set_clear_style(WHITE, BLACK);
+  tbox.set_clear_style(DEFAULT, DEFAULT);
   tbox.clear();
   tbox.present();
 
   let mut buf = Buffer::from_file(size - 2.to_row(), "src/main.rs");
   buf.paint(&mut tbox, zero());
   for col in 0..cols {
-    tbox.set_cell(Coord(col, rows - 2), ' ', BLACK, WHITE);
+    tbox.set_cell(Coord(col, rows - 2), ' ', WHITE, BLACK | REVERSE);
   }
   // tbox.set_cells(Coord(2, rows - 2),
   //                buf.name(),
   //                WHITE,
-  //                BLACK | REVERSE);
+  //                DEFAULT | REVERSE);
   let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
                     buf.name(),
                     buf.offset.0 + buf.cursor.0 + 1,
@@ -256,7 +256,7 @@ fn main() {
           // tbox.set_cells(Coord(2, rows - 2),
           //                buf.name(),
           //                WHITE,
-          //                BLACK | REVERSE);
+          //                DEFAULT | REVERSE);
           let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
                             buf.name(),
                             buf.offset.0 + buf.cursor.0 + 1,
@@ -267,7 +267,7 @@ fn main() {
                          &pos,
                          WHITE,
                          BLACK | REVERSE);
-          // tbox.set_cell(Coord(x, rows - 1), ch, WHITE, BLACK);
+          // tbox.set_cell(Coord(x, rows - 1), ch, WHITE, DEFAULT);
           changed = false;
           // tbox.set_cursor(x + 1, rows - 1);
           tbox.present();

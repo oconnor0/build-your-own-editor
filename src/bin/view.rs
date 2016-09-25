@@ -166,7 +166,37 @@ impl Buffer {
       self.cursor.0 = view_cols - 1;
     }
   }
+
+  fn col(&self) -> (usize, usize) {
+    (1 + self.offset.0 + self.cursor.0,
+     self.lines[self.offset.1 + self.cursor.1].len())
+  }
+
+  fn row(&self) -> (usize, usize) {
+    (1 + self.offset.1 + self.cursor.1, self.lines.len())
+  }
 }
+
+fn paint_status_bar(tbox: &mut Textbox, buf: &Buffer) {
+  let Coord(cols, rows) = tbox.size();
+  let (col_at, row_len) = buf.col();
+  let (row_at, lines_len) = buf.row();
+  let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
+                    buf.name(),
+                    col_at,
+                    row_len,
+                    row_at,
+                    lines_len);
+  for col in 0..cols {
+    tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
+    tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
+  }
+  tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
+                 &pos,
+                 DEFAULT,
+                 DEFAULT | REVERSE);
+}
+
 
 fn main() {
   let mut tbox = TextboxImpl::init().unwrap();
@@ -181,23 +211,7 @@ fn main() {
 
     let mut buf = Buffer::from_file(size - 2.to_row(), &arg);
     buf.paint(&mut tbox, zero());
-    for col in 0..cols {
-      tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
-    }
-    // tbox.set_cells(Coord(2, rows - 2),
-    //                buf.name(),
-    //                WHITE,
-    //                DEFAULT | REVERSE);
-    let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-                      buf.name(),
-                      buf.offset.0 + buf.cursor.0 + 1,
-                      buf.lines[buf.offset.1 + buf.cursor.1].len(),
-                      buf.offset.1 + buf.cursor.1 + 1,
-                      buf.lines.len());
-    tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
-                   &pos,
-                   DEFAULT,
-                   DEFAULT | REVERSE);
+    paint_status_bar(&mut tbox, &buf);
     tbox.present();
 
     {
@@ -255,31 +269,9 @@ fn main() {
           if changed {
             tbox.clear();
             buf.paint(&mut tbox, Coord(0, 0));
-            for col in 0..cols {
-              tbox.set_cell(Coord(col, rows - 2),
-                            ' ',
-                            DEFAULT,
-                            DEFAULT | REVERSE);
-            }
-            // tbox.set_cells(Coord(2, rows - 2),
-            //                buf.name(),
-            //                WHITE,
-            //                DEFAULT | REVERSE);
-            let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-                              buf.name(),
-                              buf.offset.0 + buf.cursor.0 + 1,
-                              buf.lines[buf.offset.1 + buf.cursor.1].len(),
-                              buf.offset.1 + buf.cursor.1 + 1,
-                              buf.lines.len());
-            tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
-                           &pos,
-                           DEFAULT,
-                           DEFAULT | REVERSE);
-            // tbox.set_cell(Coord(x, rows - 1), ch, WHITE, DEFAULT);
+            paint_status_bar(&mut tbox, &buf);
             changed = false;
-            // tbox.set_cursor(x + 1, rows - 1);
             tbox.present();
-            // x += 1;
           }
         }
       }

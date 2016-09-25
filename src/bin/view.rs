@@ -66,20 +66,21 @@ impl Buffer {
   fn insert(&mut self, ch: char) {
     use std::cmp::min;
 
-    let (col_at, cols) = self.col();
-    let (row_at, _) = self.row();
+    let col_at = self.offset.col() + self.cursor.col();
+    let cols = self.lines[self.offset.row() + self.cursor.row()].len();
+    let row_at = self.offset.row() + self.cursor.row();
     match ch {
       '\n' => {
-        let curr = self.lines[row_at - 1][0..min(col_at - 1, cols)].to_string();
-        let next = self.lines[row_at - 1][min(col_at - 1, cols)..cols]
+        let curr = self.lines[row_at][0..min(col_at, cols)].to_string();
+        let next = self.lines[row_at][min(col_at, cols)..cols]
           .to_string();
-        self.lines[row_at - 1] = curr;
+        self.lines[row_at] = curr;
         self.lines.insert(row_at, next);
         self.cursor_down();
         self.home()
       }
       _ => {
-        self.lines[row_at - 1].insert(col_at - 1, ch);
+        self.lines[row_at].insert(col_at, ch);
         self.cursor_right()
       }
     }
@@ -189,25 +190,14 @@ impl Buffer {
     }
   }
 
-  fn col(&self) -> (usize, usize) {
-    (1 + self.offset.0 + self.cursor.0,
-     self.lines[self.offset.1 + self.cursor.1].len())
-  }
-
-  fn row(&self) -> (usize, usize) {
-    (1 + self.offset.1 + self.cursor.1, self.lines.len())
-  }
-
   fn status(&self) -> String {
-    let (col_at, row_len) = self.col();
-    let (row_at, lines_len) = self.row();
-    let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-                      self.name(),
-                      self.offset.0 + self.cursor.0,
-                      self.lines[self.offset.1 + self.cursor.1].len(),
-                      self.offset.1 + self.cursor.1,
-                      self.lines.len());
-    pos
+    format!(// "{} - {:2}/{:2} - {:3}/{:3}",
+            "{} - {}/{} - {}/{}",
+            self.name(),
+            1 + self.offset.0 + self.cursor.0,
+            self.lines[self.offset.1 + self.cursor.1].len(),
+            1 + self.offset.1 + self.cursor.1,
+            self.lines.len())
   }
 }
 

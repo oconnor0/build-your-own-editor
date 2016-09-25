@@ -17,11 +17,16 @@ impl Buffer {
     use std::fs::File;
 
     let path = PathBuf::from(filename);
-    let file = File::open(path.as_path()).unwrap();
-    let bufr = BufReader::new(&file);
     let mut lines = vec![];
-    for line in bufr.lines() {
-      lines.push(line.unwrap());
+
+    if path.exists() {
+      let file = File::open(path.as_path()).unwrap();
+      let bufr = BufReader::new(&file);
+      for line in bufr.lines() {
+        lines.push(line.unwrap());
+      }
+    } else {
+      lines.push(String::new());
     }
 
     Buffer {
@@ -72,16 +77,33 @@ impl Buffer {
     match ch {
       '\n' => {
         let curr = self.lines[row_at][0..min(col_at, cols)].to_string();
-        let next = self.lines[row_at][min(col_at, cols)..cols]
-          .to_string();
+        let next = self.lines[row_at][min(col_at, cols)..cols].to_string();
         self.lines[row_at] = curr;
-        self.lines.insert(row_at, next);
+        self.lines.insert(row_at + 1, next);
         self.cursor_down();
-        self.home()
+        self.home();
+      }
+      '\x08' => {
+        // backspace
+        let curr_row = self.offset.1 + self.cursor.1;
+        let curr_col = self.offset.0 + self.cursor.0;
+        if curr_col == 0 {
+          if curr_row > 0 {
+            // join lines
+            let prev_row = curr_row - 1;
+            self.cursor_up();
+            self.end();
+            let curr_str = self.lines.remove(curr_row);
+            self.lines[prev_row].push_str(&curr_str);
+          }
+        } else {
+          self.lines[curr_row].remove(curr_col - 1);
+          self.cursor_left();
+        }
       }
       _ => {
         self.lines[row_at].insert(col_at, ch);
-        self.cursor_right()
+        self.cursor_right();
       }
     }
   }
@@ -94,6 +116,11 @@ impl Buffer {
       self.offset.1 += 1;
     } else {
       self.cursor.1 += 1;
+    }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
     }
   }
 
@@ -191,13 +218,21 @@ impl Buffer {
   }
 
   fn status(&self) -> String {
+    let curr_col = 1 + self.offset.0 + self.cursor.0;
+    let curr_row = 1 + self.offset.1 + self.cursor.1;
+    let rows_in_buf = self.lines.len();
+    let cols_in_row = //if curr_row < rows_in_buf {
+      self.lines[self.offset.1 + self.cursor.1].len();
+    // } else {
+    // 0
+    // };
     format!(// "{} - {:2}/{:2} - {:3}/{:3}",
             "{} - {}/{} - {}/{}",
             self.name(),
-            1 + self.offset.0 + self.cursor.0,
-            self.lines[self.offset.1 + self.cursor.1].len(),
-            1 + self.offset.1 + self.cursor.1,
-            self.lines.len())
+            curr_col,
+            cols_in_row,
+            curr_row,
+            rows_in_buf)
   }
 }
 
@@ -280,6 +315,10 @@ fn main() {
             }
             Some(Event::Key(_, _, Key::Enter)) => {
               buf.insert('\n');
+              changed = true;
+            }
+            Some(Event::Key(_, _, Key::Backspace)) => {
+              buf.insert('\x08');
               changed = true;
             }
             // Some(Event::Key(c, k, m)) => {

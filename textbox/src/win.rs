@@ -164,7 +164,7 @@ fn to_event(input: Input) -> Option<Event> {
           kc if kc == w::VK_NEXT as u16 => Key::PageDown,
           kc if kc == w::VK_BACK as u16 => Key::Backspace,
           kc if kc == w::VK_TAB as u16 => Key::Tab,
-          kc if kc == w::VK_RETURN as u16 => Key::Return,
+          kc if kc == w::VK_RETURN as u16 => Key::Enter,
           kc if kc >= w::VK_F1 as u16 && kc <= w::VK_F24 as u16 => {
             Key::F((kc - w::VK_F1 as u16 + 1) as u8)
           }

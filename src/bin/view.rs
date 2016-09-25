@@ -63,6 +63,28 @@ impl Buffer {
     }
   }
 
+  fn insert(&mut self, ch: char) {
+    use std::cmp::min;
+
+    let (col_at, cols) = self.col();
+    let (row_at, _) = self.row();
+    match ch {
+      '\n' => {
+        let curr = self.lines[row_at - 1][0..min(col_at - 1, cols)].to_string();
+        let next = self.lines[row_at - 1][min(col_at - 1, cols)..cols]
+          .to_string();
+        self.lines[row_at - 1] = curr;
+        self.lines.insert(row_at, next);
+        self.cursor_down();
+        self.home()
+      }
+      _ => {
+        self.lines[row_at - 1].insert(col_at - 1, ch);
+        self.cursor_right()
+      }
+    }
+  }
+
   fn cursor_down(&mut self) {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
       // do nothing
@@ -175,24 +197,29 @@ impl Buffer {
   fn row(&self) -> (usize, usize) {
     (1 + self.offset.1 + self.cursor.1, self.lines.len())
   }
+
+  fn status(&self) -> String {
+    let (col_at, row_len) = self.col();
+    let (row_at, lines_len) = self.row();
+    let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
+                      self.name(),
+                      self.offset.0 + self.cursor.0,
+                      self.lines[self.offset.1 + self.cursor.1].len(),
+                      self.offset.1 + self.cursor.1,
+                      self.lines.len());
+    pos
+  }
 }
 
 fn paint_status_bar(tbox: &mut Textbox, buf: &Buffer) {
   let Coord(cols, rows) = tbox.size();
-  let (col_at, row_len) = buf.col();
-  let (row_at, lines_len) = buf.row();
-  let pos = format!("{} - {:2}/{:2} - {:3}/{:3}",
-                    buf.name(),
-                    col_at,
-                    row_len,
-                    row_at,
-                    lines_len);
+  let status = buf.status();
   for col in 0..cols {
     tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
     tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
   }
-  tbox.set_cells(Coord(cols - 2 - pos.len(), rows - 2),
-                 &pos,
+  tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
+                 &status,
                  DEFAULT,
                  DEFAULT | REVERSE);
 }
@@ -255,6 +282,14 @@ fn main() {
             }
             Some(Event::Key(_, _, Key::Home)) => {
               buf.home();
+              changed = true;
+            }
+            Some(Event::Key(ch, _, Key::Char(_))) => {
+              buf.insert(ch);
+              changed = true;
+            }
+            Some(Event::Key(_, _, Key::Enter)) => {
+              buf.insert('\n');
               changed = true;
             }
             // Some(Event::Key(c, k, m)) => {

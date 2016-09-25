@@ -70,10 +70,10 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       kc if kc == TB_KEY_PGDN => Key::PageDown,
       kc if kc == TB_KEY_BACKSPACE => Key::Backspace,
       kc if kc == TB_KEY_TAB => Key::Tab,
-      kc if kc == TB_KEY_ENTER => Key::Return,
+      kc if kc == TB_KEY_ENTER => Key::Enter,
       kc if kc == TB_KEY_CTRL_Q => {
         mods |= CTRL;
-        Key::Char('q')
+        Key::Char('Q')
       }
       // kc if kc >= w::VK_F1 as u16 && kc <= w::VK_F24 as u16 => {
       //   Key::F((kc - w::VK_F1 as u16 + 1) as u8)

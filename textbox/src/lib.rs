@@ -105,7 +105,7 @@ mod types {
     PageDown,
     Backspace,
     Tab,
-    Return,
+    Enter,
   }
 
   #[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]

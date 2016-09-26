@@ -149,6 +149,8 @@ fn to_event(raw: Input) -> Option<Event> {
   match raw {
     Input::Key { key_down, key_code, wide_char, control_key_state, .. } => {
       if key_down {
+        let ch = wide_char as u8 as char;
+        let mods = to_mod(control_key_state);
         let kc = match key_code {
           kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
           kc if kc == w::VK_LEFT as u16 => Key::Left,
@@ -173,7 +175,11 @@ fn to_event(raw: Input) -> Option<Event> {
           kc if kc >= 0x20 && kc <= 0x7e => Key::Char(kc as u8 as char),
           _ => Key::Char('\0'),
         };
-        Some(Event::Key(wide_char as u8 as char, to_mod(control_key_state), kc))
+        if ch == '\0' && !mods.is_empty() {
+          None
+        } else {
+          Some(Event::Key(ch, mods, kc))
+        }
       } else {
         None
       }

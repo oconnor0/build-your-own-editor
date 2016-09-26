@@ -144,11 +144,11 @@ fn to_charinfo(c: Cell) -> CharInfo {
   CharInfo::new(c.ch as u16, to_fg(c.fg) | to_bg(c.bg))
 }
 
-fn to_event(input: Input) -> Option<Event> {
-  match input {
+fn to_event(raw: Input) -> Option<Event> {
+  println!("{:?}", raw);
+  match raw {
     Input::Key { key_down, key_code, wide_char, control_key_state, .. } => {
       if key_down {
-        println!("{:?}", key_code);
         let kc = match key_code {
           kc if kc == w::VK_ESCAPE as u16 => Key::Escape,
           kc if kc == w::VK_LEFT as u16 => Key::Left,
@@ -169,10 +169,8 @@ fn to_event(input: Input) -> Option<Event> {
             Key::F((kc - w::VK_F1 as u16 + 1) as u8)
           }
           // Doesn't handle shift.
-          // Letters
-          kc if kc >= 65 && kc <= 90 => Key::Char(kc as u8 as char),
-          // Numbers
-          kc if kc >= 48 && kc <= 57 => Key::Char(kc as u8 as char),
+          // Printable characters.
+          kc if kc >= 0x20 && kc <= 0x7e => Key::Char(kc as u8 as char),
           _ => Key::Char('\0'),
         };
         Some(Event::Key(wide_char as u8 as char, to_mod(control_key_state), kc))
@@ -275,7 +273,12 @@ impl Textbox for WinConsoleWrapper {
       match self.stdin.read_input() {
         Ok(inputs) => {
           self.events.extend(inputs);
-          to_event(self.events.pop_front().unwrap())
+          if let Some(e) = to_event(self.events.pop_front().unwrap()) {
+            Some(e)
+          } else {
+            // TODO: Possible stack overflow.
+            self.pop_event()
+          }
         }
         Err(_) => None,
       }

@@ -100,6 +100,22 @@ impl Buffer {
           self.cursor_left();
         }
       }
+      '\x7f' => {
+        // delete
+        let curr_row = self.offset.1 + self.cursor.1;
+        let curr_col = self.offset.0 + self.cursor.0;
+        let line_len = self.lines[curr_row].len();
+        if curr_col == line_len {
+          if curr_row < self.lines.len() - 1 {
+            // join lines
+            let next_row = curr_row + 1;
+            let next_str = self.lines.remove(next_row);
+            self.lines[curr_row].push_str(&next_str);
+          }
+        } else {
+          self.lines[curr_row].remove(curr_col);
+        }
+      }
       _ => {
         self.lines[row_at].insert(col_at, ch);
         self.cursor_right();
@@ -318,6 +334,10 @@ fn main() {
             }
             Some(Event::Key(_, _, Key::Backspace)) => {
               buf.insert('\x08');
+              changed = true;
+            }
+            Some(Event::Key(_, _, Key::Delete)) => {
+              buf.insert('\x7f');
               changed = true;
             }
             // Some(Event::Key(c, k, m)) => {

@@ -19,15 +19,14 @@ impl Buffer {
     let path = PathBuf::from(filename);
     let mut lines = vec![];
 
-    if path.exists() {
+    if path.exists() && path.is_file() {
       let file = File::open(path.as_path()).unwrap();
       let bufr = BufReader::new(&file);
       for line in bufr.lines() {
         lines.push(line.unwrap());
       }
-    } else {
-      lines.push(String::new());
     }
+    lines.push(String::new());
 
     Buffer {
       path: Some(path),

@@ -1,6 +1,9 @@
 #![allow(dead_code)]
 extern crate textbox;
 use textbox::*;
+use std::fs::File;
+use std::io;
+use std::io::{BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
 
 struct Buffer {
@@ -120,6 +123,27 @@ impl Buffer {
         self.lines[row_at].insert(col_at, ch);
         self.cursor_right();
       }
+    }
+  }
+
+  fn save(&mut self) -> io::Result<usize> {
+    if let Some(ref path) = self.path {
+      let file = if path.exists() {
+        try!(File::open(path))
+      } else {
+        try!(File::create(path))
+      };
+      let mut file = BufWriter::new(file);
+      let nl = vec!['\n' as u8];
+      let mut written = 0;
+      for ref line in self.lines.iter() {
+        written += try!(file.write(line.as_bytes()));
+        written += try!(file.write(&nl));
+      }
+      Ok(written)
+    } else {
+      panic!();
+      // Err(Error::new(ErrorKind::NotFound, "no filename given"))
     }
   }
 
@@ -292,6 +316,9 @@ fn main() {
           match e {
             Some(Event::Key(_, CTRL, Key::Char('Q'))) => break 'arg_loop,
             Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,
+            Some(Event::Key(_, CTRL, Key::Char('W'))) => {
+              buf.save().unwrap();
+            }
             Some(Event::Key(_, _, Key::PageUp)) => {
               buf.page_up();
               changed = true;

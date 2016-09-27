@@ -57,6 +57,7 @@ version = "0.0.1"
 dependencies = [
  "bit-set 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
  "termbox-sys 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.8",

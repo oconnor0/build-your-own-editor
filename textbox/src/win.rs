@@ -3,6 +3,7 @@
 
 extern crate winapi;
 extern crate wio;
+extern crate kernel32;
 
 use bit_set::BitSet;
 use std::collections::VecDeque;
@@ -197,6 +198,11 @@ impl Textbox for WinConsoleWrapper {
     let backbuf = vec![Cell { ch: ' ', fg: DEFAULT, bg: DEFAULT, }; cell_count]
       .into_boxed_slice();
     frontbuf.set_active().unwrap();
+    unsafe {
+      kernel32::SetConsoleMode(*stdin.0,
+                               w::ENABLE_WINDOW_INPUT | w::ENABLE_MOUSE_INPUT |
+                               w::ENABLE_EXTENDED_FLAGS);
+    }
     Ok(WinConsoleWrapper {
       stdin: stdin,
       events: VecDeque::new(),
@@ -275,7 +281,9 @@ impl Textbox for WinConsoleWrapper {
   fn pop_event(&mut self) -> Option<Event> {
     if self.events.len() > 0 {
       to_event(self.events.pop_front().unwrap())
-    } else /*if self.stdin.available_input().unwrap_or(0) > 0*/ {
+    } else
+    // if self.stdin.available_input().unwrap_or(0) > 0
+    {
       match self.stdin.read_input() {
         Ok(inputs) => {
           self.events.extend(inputs);
@@ -288,8 +296,8 @@ impl Textbox for WinConsoleWrapper {
         }
         Err(_) => None,
       }
-    // } else {
-    //   None
+      // } else {
+      //   None
     }
   }
 }

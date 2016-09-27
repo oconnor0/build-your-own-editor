@@ -11,6 +11,7 @@ num-traits = "*"
 [target.'cfg(windows)'.dependencies]
 winapi = { path = "../../winapi-rs" }
 wio = { path = "../../wio-rs" }
+kernel32-sys = "*"
 
 [target.'cfg(unix)'.dependencies]
 termbox-sys = "*"

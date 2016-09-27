@@ -127,12 +127,15 @@ impl Buffer {
   }
 
   fn save(&mut self) -> io::Result<usize> {
+    use std::fs::OpenOptions;
+
     if let Some(ref path) = self.path {
-      let file = if path.exists() {
-        try!(File::open(path))
-      } else {
-        try!(File::create(path))
-      };
+      let file = OpenOptions::new()
+        .create(true)
+        .write(true)
+        .truncate(true)
+        .open(path)
+        .unwrap();
       let mut file = BufWriter::new(file);
       let nl = vec!['\n' as u8];
       let mut written = 0;
@@ -184,6 +187,11 @@ impl Buffer {
       self.offset.1 -= 1;
     } else {
       self.cursor.1 -= 1;
+    }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
     }
   }
 
@@ -316,7 +324,7 @@ fn main() {
           match e {
             Some(Event::Key(_, CTRL, Key::Char('Q'))) => break 'arg_loop,
             Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,
-            Some(Event::Key(_, CTRL, Key::Char('W'))) => {
+            Some(Event::Key(_, CTRL, Key::Char('S'))) => {
               buf.save().unwrap();
             }
             Some(Event::Key(_, _, Key::PageUp)) => {

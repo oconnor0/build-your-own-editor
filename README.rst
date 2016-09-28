@@ -13,7 +13,7 @@ to write a Termbox-like library that supported both Windows and Unix consoles.
 Textbox
 -------
 
-The public API of Textbox is provided in ``lib.rs``_. The library is called
+The public API of Textbox is provided in lib.rs_. The library is called
 Textbox since I kept mistyping Termbox as Textbox.
 
 View

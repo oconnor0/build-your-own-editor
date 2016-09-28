@@ -74,7 +74,10 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       kc if kc == TB_KEY_DELETE => Key::Delete,
       kc if kc == TB_KEY_TAB => Key::Tab,
       kc if kc == TB_KEY_ENTER => Key::Enter,
-      kc if kc == TB_KEY_SPACE => { ch = ' '; Key::Char(' ') }
+      kc if kc == TB_KEY_SPACE => {
+        ch = ' ';
+        Key::Char(' ')
+      }
       kc if kc == TB_KEY_CTRL_S => {
         mods |= CTRL;
         Key::Char('S')

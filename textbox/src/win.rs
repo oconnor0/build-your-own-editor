@@ -198,11 +198,9 @@ impl Textbox for WinConsoleWrapper {
     let backbuf = vec![Cell { ch: ' ', fg: DEFAULT, bg: DEFAULT, }; cell_count]
       .into_boxed_slice();
     frontbuf.set_active().unwrap();
-    unsafe {
-      kernel32::SetConsoleMode(*stdin.0,
-                               w::ENABLE_WINDOW_INPUT | w::ENABLE_MOUSE_INPUT |
-                               w::ENABLE_EXTENDED_FLAGS);
-    }
+    stdin.set_console_mode(w::ENABLE_WINDOW_INPUT | w::ENABLE_MOUSE_INPUT |
+                        w::ENABLE_EXTENDED_FLAGS)
+      .unwrap();
     Ok(WinConsoleWrapper {
       stdin: stdin,
       events: VecDeque::new(),

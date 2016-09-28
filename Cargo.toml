@@ -5,3 +5,6 @@ authors = ["Matthew O'Connor <thegreendragon@gmail.com>"]
 
 [dependencies]
 textbox = { path = "textbox" }
+
+# [workspace]
+# members = [".", "textbox"]

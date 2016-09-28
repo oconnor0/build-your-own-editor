@@ -306,7 +306,6 @@ fn paint_status_bar(tbox: &mut Textbox, buf: &Buffer) {
                  DEFAULT | REVERSE);
 }
 
-
 fn main() {
   let mut tbox = TextboxImpl::init().unwrap();
   let size = tbox.size();

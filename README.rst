@@ -13,7 +13,7 @@ to write a Termbox-like library that supported both Windows and Unix consoles.
 Textbox
 -------
 
-The public API of Textbox is provided in ``lib.rs_``. The library is called
+The public API of Textbox is provided in ``lib.rs``_. The library is called
 Textbox since I kept mistyping Termbox as Textbox.
 
 View
@@ -43,8 +43,7 @@ Current status of ``view``:
 - all features work on Windows console and Linux shell
 - opens 
 - virtually no error checking/handling
-- opening `The Majestic Million CSV`_ - a 75 MB CSV - on a year old i7 takes
-a fraction of a second
+- opening `The Majestic Million CSV`_ - a 75 MB CSV - on a year old i7 takes a fraction of a second
 
 .. _kilo: https://github.com/antirez/kilo
 .. _lib.rs: https://github.com/oconnor0/build-your-own-editor/blob/master/textbox/src/lib.rs

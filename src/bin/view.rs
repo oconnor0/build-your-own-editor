@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 extern crate textbox;
 use textbox::*;
-use std::fs::File;
 use std::io;
 use std::io::{BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
@@ -12,6 +11,7 @@ struct Buffer {
   offset: Coord,
   cursor: Coord,
   view_size: Coord,
+  dirty: bool,
 }
 
 impl Buffer {
@@ -39,6 +39,7 @@ impl Buffer {
       offset: zero(),
       cursor: zero(),
       view_size: view_size,
+      dirty: false,
     }
   }
 
@@ -74,6 +75,7 @@ impl Buffer {
 
   fn insert(&mut self, ch: char) {
     use std::cmp::min;
+    self.dirty = true;
 
     let col_at = self.offset.col() + self.cursor.col();
     let cols = self.lines[self.offset.row() + self.cursor.row()].len();
@@ -131,23 +133,28 @@ impl Buffer {
   fn save(&mut self) -> io::Result<usize> {
     use std::fs::OpenOptions;
 
-    if let Some(ref path) = self.path {
-      let file = OpenOptions::new()
-        .create(true)
-        .write(true)
-        .truncate(true)
-        .open(path)
-        .unwrap();
-      let mut file = BufWriter::new(file);
-      let nl = vec!['\n' as u8];
-      let mut written = 0;
-      for ref line in self.lines.iter() {
-        written += try!(file.write(line.as_bytes()));
-        written += try!(file.write(&nl));
+    if self.dirty {
+      if let Some(ref path) = self.path {
+        let file = OpenOptions::new()
+          .create(true)
+          .write(true)
+          .truncate(true)
+          .open(path)
+          .unwrap();
+        let mut file = BufWriter::new(file);
+        let nl = vec!['\n' as u8];
+        let mut written = 0;
+        for ref line in self.lines.iter() {
+          written += try!(file.write(line.as_bytes()));
+          written += try!(file.write(&nl));
+        }
+        self.dirty = false;
+        Ok(written)
+      } else {
+        Err(Error::new(ErrorKind::NotFound, "no filename given"))
       }
-      Ok(written)
     } else {
-      Err(Error::new(ErrorKind::NotFound, "no filename given"))
+      Ok(0)
     }
   }
 
@@ -211,7 +218,6 @@ impl Buffer {
       self.end();
     }
   }
-
 
   fn cursor_right(&mut self) {
     let offset_row = self.offset.1;
@@ -277,8 +283,9 @@ impl Buffer {
     // 0
     // };
     format!(// "{} - {:2}/{:2} - {:3}/{:3}",
-            "{} - {}/{} - {}/{}",
+            "{}{} - {}/{} - {}/{}",
             self.name(),
+            if self.dirty { "*" } else { "" },
             curr_col,
             cols_in_row,
             curr_row,
@@ -303,8 +310,6 @@ fn paint_status_bar(tbox: &mut Textbox, buf: &Buffer) {
 fn main() {
   let mut tbox = TextboxImpl::init().unwrap();
   let size = tbox.size();
-  let Coord(cols, rows) = size;
-  // tbox.set_cursor(0, rows - 1);
   tbox.set_clear_style(DEFAULT, DEFAULT);
 
   'arg_loop: for arg in std::env::args().skip(1) {
@@ -329,6 +334,7 @@ fn main() {
             Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,
             Some(Event::Key(_, CTRL, Key::Char('S'))) => {
               buf.save().unwrap();
+              changed = true;
             }
             Some(Event::Key(_, _, Key::PageUp)) => {
               buf.page_up();
@@ -376,6 +382,11 @@ fn main() {
             }
             Some(Event::Key(_, _, Key::Delete)) => {
               buf.insert('\x7f');
+              changed = true;
+            }
+            Some(Event::Key(_, _, Key::Tab)) => {
+              buf.insert(' ');
+              buf.insert(' ');
               changed = true;
             }
             // Some(Event::Key(c, k, m)) => {

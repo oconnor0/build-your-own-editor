@@ -10,9 +10,13 @@ bit-set = "*"
 num-traits = "*"
 
 [target.'cfg(windows)'.dependencies]
-winapi = { git = "https://github.com/oconnor0/winapi-rs.git", rev = "textbox" }
-wio = { git = "https://github.com/oconnor0/wio-rs.git", rev = "textbox" }
+winapi = "0.2.8"
+wio = "0.1.2"
 kernel32-sys = "*"
 
 [target.'cfg(unix)'.dependencies]
 termbox-sys = "*"
+
+[replace]
+"winapi:0.2.8" = { git = "https://github.com/oconnor0/winapi-rs.git", rev = "textbox" }
+"wio:0.1.2" = { git = "https://github.com/oconnor0/wio-rs.git", rev = "textbox" }

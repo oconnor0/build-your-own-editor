@@ -14,7 +14,9 @@ Textbox
 -------
 
 The public API of Textbox is provided in lib.rs_. The library is called
-Textbox since I kept mistyping Termbox as Textbox.
+Textbox since I kept mistyping Termbox as Textbox. It is presently implemented
+as a wrapper around Termbox on Unix and with direct Windows API calls (through
+cloned and modified winapi-rs and wio-rs) on Windows.
 
 View
 ----

@@ -43,7 +43,6 @@ Current status of ``view``:
 - open multiple files with ``view a b c``
 - ``Esc`` closes the current file and goes to the next
 - all features work on Windows console and Linux shell
-- opens 
 - virtually no error checking/handling
 - opening `The Majestic Million CSV`_ - a 75 MB CSV - on a year old i7 takes a fraction of a second
 

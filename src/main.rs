@@ -239,7 +239,7 @@ fn main() {
             changed = true;
           }
           Some(Event::Key(c, k, m)) => {
-            println!("({:?}, {:?}, {:?})", c, k, m);
+            // println!("({:?}, {:?}, {:?})", c, k, m);
             // ch = c;
             changed = true;
           }

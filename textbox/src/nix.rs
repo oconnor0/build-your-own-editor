@@ -7,6 +7,7 @@ extern crate termbox_sys;
 use self::termbox_sys::*;
 use std::ops::Drop;
 use std::os::raw::c_int;
+use std::char;
 
 pub use types::*;
 
@@ -57,6 +58,7 @@ fn to_mods(raw: u8) -> Mod { NO_MODS }
 
 fn to_event(raw: RawEvent) -> Option<Event> {
   if raw.etype == TB_EVENT_KEY {
+    let mut ch = char::from_u32(raw.ch).unwrap();
     let mut mods = to_mods(raw.emod);
     let kc = match raw.key {
       kc if kc == TB_KEY_ESC => Key::Escape,
@@ -68,9 +70,15 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       kc if kc == TB_KEY_END => Key::End,
       kc if kc == TB_KEY_PGUP => Key::PageUp,
       kc if kc == TB_KEY_PGDN => Key::PageDown,
-      kc if kc == TB_KEY_BACKSPACE => Key::Backspace,
+      kc if kc == TB_KEY_BACKSPACE || kc == TB_KEY_BACKSPACE2 => Key::Backspace,
+      kc if kc == TB_KEY_DELETE => Key::Delete,
       kc if kc == TB_KEY_TAB => Key::Tab,
       kc if kc == TB_KEY_ENTER => Key::Enter,
+      kc if kc == TB_KEY_SPACE => { ch = ' '; Key::Char(' ') }
+      kc if kc == TB_KEY_CTRL_S => {
+        mods |= CTRL;
+        Key::Char('S')
+      }
       kc if kc == TB_KEY_CTRL_Q => {
         mods |= CTRL;
         Key::Char('Q')
@@ -85,7 +93,7 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       // kc if kc >= 48 && kc <= 57 => Key::Char(kc as u8 as char),
       _ => Key::Char('\0'),
     };
-    Some(Event::Key(char::from_u32(raw.ch).unwrap(), mods, kc))
+    Some(Event::Key(ch, mods, kc))
   } else {
     None
   }

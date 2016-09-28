@@ -29,7 +29,9 @@ impl Buffer {
         lines.push(line.unwrap());
       }
     }
-    lines.push(String::new());
+    if lines.len() == 0 {
+      lines.push(String::new());
+    }
 
     Buffer {
       path: Some(path),
@@ -145,8 +147,52 @@ impl Buffer {
       }
       Ok(written)
     } else {
-      panic!();
-      // Err(Error::new(ErrorKind::NotFound, "no filename given"))
+      Err(Error::new(ErrorKind::NotFound, "no filename given"))
+    }
+  }
+
+  fn page_up(&mut self) {
+    if self.offset.row() + self.cursor.row() == 0 {
+      // do nothing
+    } else if self.offset.1 == 0 {
+      self.cursor.1 = 0;
+    } else if self.offset.row() <= self.view_size.row() - 1 {
+      if self.cursor.row() > self.view_size.row() - self.offset.row() {
+        self.cursor.1 -= self.view_size.row() - self.offset.row();
+      }
+      self.offset.1 = 0;
+    } else {
+      self.offset.1 -= self.view_size.row();
+    }
+  }
+
+  fn page_down(&mut self) {
+    if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
+      // do nothing
+    } else if self.lines.len() < self.view_size.1 {
+      self.cursor.1 = self.lines.len() - 1;
+    } else if self.offset.1 >= self.lines.len() - self.view_size.1 {
+      self.cursor.1 = self.lines.len() - self.offset.1 - 1;
+    } else {
+      self.offset.1 += self.view_size.1;
+      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
+        self.offset.1 = self.lines.len() - self.view_size.1;
+      }
+    }
+  }
+
+  fn cursor_up(&mut self) {
+    if self.offset.row() + self.cursor.row() == 0 {
+      // do nothing
+    } else if self.cursor.row() == 0 {
+      self.offset.1 -= 1;
+    } else {
+      self.cursor.1 -= 1;
+    }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
     }
   }
 
@@ -166,34 +212,6 @@ impl Buffer {
     }
   }
 
-  fn page_down(&mut self) {
-    if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
-      // do nothing
-    } else if self.lines.len() < self.view_size.row() {
-      self.cursor.1 = self.lines.len() - 1;
-    } else {
-      self.offset.1 += self.view_size.1;
-      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
-        self.offset.1 = self.lines.len() - self.view_size.1;
-        self.cursor.1 = self.view_size.1 - 1;
-      }
-    }
-  }
-
-  fn cursor_up(&mut self) {
-    if self.offset.row() + self.cursor.row() == 0 {
-      // do nothing
-    } else if self.cursor.row() == 0 {
-      self.offset.1 -= 1;
-    } else {
-      self.cursor.1 -= 1;
-    }
-
-    if self.offset.0 + self.cursor.0 >=
-       self.lines[self.offset.1 + self.cursor.1].len() {
-      self.end();
-    }
-  }
 
   fn cursor_right(&mut self) {
     let offset_row = self.offset.1;
@@ -226,21 +244,6 @@ impl Buffer {
       self.offset.0 -= 1;
     } else {
       self.cursor.0 -= 1;
-    }
-  }
-
-  fn page_up(&mut self) {
-    if self.offset.row() + self.cursor.row() == 0 {
-      // do nothing
-    } else if self.offset.1 == 0 {
-      self.cursor.1 = 0;
-    } else if self.offset.row() <= self.view_size.row() - 1 {
-      if self.cursor.row() > self.view_size.row() - self.offset.row() {
-        self.cursor.1 -= self.view_size.row() - self.offset.row();
-      }
-      self.offset.1 = 0;
-    } else {
-      self.offset.1 -= self.view_size.row();
     }
   }
 
@@ -320,7 +323,7 @@ fn main() {
       'event_loop: loop {
         {
           let e = tbox.pop_event();
-          println!("{:?}", e);
+          // println!("{:?}", e);
           match e {
             Some(Event::Key(_, CTRL, Key::Char('Q'))) => break 'arg_loop,
             Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,

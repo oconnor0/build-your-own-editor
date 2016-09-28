@@ -171,6 +171,11 @@ impl Buffer {
     } else {
       self.offset.1 -= self.view_size.row();
     }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
+    }
   }
 
   fn page_down(&mut self) {
@@ -185,6 +190,11 @@ impl Buffer {
       if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
         self.offset.1 = self.lines.len() - self.view_size.1;
       }
+    }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
     }
   }
 

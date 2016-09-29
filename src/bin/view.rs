@@ -17,7 +17,7 @@ trait Navigable {
   fn end(&mut self) -> &mut Self;
 }
 
-struct Buffer {
+struct FileEdit {
   path: Option<PathBuf>,
   lines: Vec<String>,
   offset: Coord,
@@ -26,8 +26,8 @@ struct Buffer {
   dirty: bool,
 }
 
-impl Buffer {
-  fn from_file(view_size: Coord, filename: &str) -> Buffer {
+impl FileEdit {
+  fn from_file(view_size: Coord, filename: &str) -> Self {
     use std::io::{BufRead, BufReader};
     use std::fs::File;
 
@@ -45,7 +45,7 @@ impl Buffer {
       lines.push(String::new());
     }
 
-    Buffer {
+    FileEdit {
       path: Some(path),
       lines: lines,
       offset: zero(),
@@ -190,7 +190,7 @@ impl Buffer {
   }
 }
 
-impl Navigable for Buffer {
+impl Navigable for FileEdit {
   fn cursor_up(&mut self) -> &mut Self {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
@@ -333,7 +333,7 @@ impl Navigable for Buffer {
   }
 }
 
-fn paint_status_bar(tbox: &mut Textbox, buf: &Buffer) {
+fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
   let Coord(cols, rows) = tbox.size();
   let status = buf.status();
   for col in 0..cols {
@@ -355,7 +355,7 @@ fn main() {
     tbox.clear();
     tbox.present();
 
-    let mut buf = Buffer::from_file(size - 2.to_row(), &arg);
+    let mut buf = FileEdit::from_file(size - 2.to_row(), &arg);
     buf.paint(&mut tbox, zero());
     paint_status_bar(&mut tbox, &buf);
     tbox.present();

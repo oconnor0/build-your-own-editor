@@ -5,6 +5,18 @@ use std::io;
 use std::io::{BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
 
+trait Navigable {
+  fn cursor_up(&mut self) -> &mut Self;
+  fn cursor_down(&mut self) -> &mut Self;
+  fn cursor_left(&mut self) -> &mut Self;
+  fn cursor_right(&mut self) -> &mut Self;
+
+  fn page_up(&mut self) -> &mut Self;
+  fn page_down(&mut self) -> &mut Self;
+  fn home(&mut self) -> &mut Self;
+  fn end(&mut self) -> &mut Self;
+}
+
 struct Buffer {
   path: Option<PathBuf>,
   lines: Vec<String>,
@@ -158,47 +170,28 @@ impl Buffer {
     }
   }
 
-  fn page_up(&mut self) {
-    if self.offset.row() + self.cursor.row() == 0 {
-      // do nothing
-    } else if self.offset.1 == 0 {
-      self.cursor.1 = 0;
-    } else if self.offset.row() <= self.view_size.row() - 1 {
-      if self.cursor.row() > self.view_size.row() - self.offset.row() {
-        self.cursor.1 -= self.view_size.row() - self.offset.row();
-      }
-      self.offset.1 = 0;
-    } else {
-      self.offset.1 -= self.view_size.row();
-    }
-
-    if self.offset.0 + self.cursor.0 >=
-       self.lines[self.offset.1 + self.cursor.1].len() {
-      self.end();
-    }
+  fn status(&self) -> String {
+    let curr_col = 1 + self.offset.0 + self.cursor.0;
+    let curr_row = 1 + self.offset.1 + self.cursor.1;
+    let rows_in_buf = self.lines.len();
+    let cols_in_row = //if curr_row < rows_in_buf {
+      self.lines[self.offset.1 + self.cursor.1].len();
+    // } else {
+    // 0
+    // };
+    format!(// "{} - {:2}/{:2} - {:3}/{:3}",
+            "{}{} - {}/{} - {}/{}",
+            self.name(),
+            if self.dirty { "*" } else { "" },
+            curr_col,
+            cols_in_row,
+            curr_row,
+            rows_in_buf)
   }
+}
 
-  fn page_down(&mut self) {
-    if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
-      // do nothing
-    } else if self.lines.len() < self.view_size.1 {
-      self.cursor.1 = self.lines.len() - 1;
-    } else if self.offset.1 >= self.lines.len() - self.view_size.1 {
-      self.cursor.1 = self.lines.len() - self.offset.1 - 1;
-    } else {
-      self.offset.1 += self.view_size.1;
-      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
-        self.offset.1 = self.lines.len() - self.view_size.1;
-      }
-    }
-
-    if self.offset.0 + self.cursor.0 >=
-       self.lines[self.offset.1 + self.cursor.1].len() {
-      self.end();
-    }
-  }
-
-  fn cursor_up(&mut self) {
+impl Navigable for Buffer {
+  fn cursor_up(&mut self) -> &mut Self {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
     } else if self.cursor.row() == 0 {
@@ -211,9 +204,11 @@ impl Buffer {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
+
+    self
   }
 
-  fn cursor_down(&mut self) {
+  fn cursor_down(&mut self) -> &mut Self {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
       // do nothing
     } else if self.cursor.row() >= self.view_size.row() - 1 {
@@ -227,9 +222,26 @@ impl Buffer {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
+
+    self
   }
 
-  fn cursor_right(&mut self) {
+  fn cursor_left(&mut self) -> &mut Self {
+    if self.offset.0 + self.cursor.0 == 0 {
+      if self.offset.1 + self.cursor.1 > 0 {
+        self.cursor_up();
+        self.end();
+      }
+    } else if self.cursor.0 == 0 {
+      self.offset.0 -= 1;
+    } else {
+      self.cursor.0 -= 1;
+    }
+
+    self
+  }
+
+  fn cursor_right(&mut self) -> &mut Self {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
     let view_cols = self.view_size.0;
@@ -248,27 +260,62 @@ impl Buffer {
     } else {
       self.cursor.0 += 1;
     }
+
+    self
   }
 
-  fn cursor_left(&mut self) {
-    if self.offset.0 + self.cursor.0 == 0 {
-      if self.offset.1 + self.cursor.1 > 0 {
-        self.cursor_up();
-        self.end();
+  fn page_up(&mut self) -> &mut Self {
+    if self.offset.row() + self.cursor.row() == 0 {
+      // do nothing
+    } else if self.offset.1 == 0 {
+      self.cursor.1 = 0;
+    } else if self.offset.row() <= self.view_size.row() - 1 {
+      if self.cursor.row() > self.view_size.row() - self.offset.row() {
+        self.cursor.1 -= self.view_size.row() - self.offset.row();
       }
-    } else if self.cursor.0 == 0 {
-      self.offset.0 -= 1;
+      self.offset.1 = 0;
     } else {
-      self.cursor.0 -= 1;
+      self.offset.1 -= self.view_size.row();
     }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
+    }
+
+    self
   }
 
-  fn home(&mut self) {
+  fn page_down(&mut self) -> &mut Self {
+    if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
+      // do nothing
+    } else if self.lines.len() < self.view_size.1 {
+      self.cursor.1 = self.lines.len() - 1;
+    } else if self.offset.1 >= self.lines.len() - self.view_size.1 {
+      self.cursor.1 = self.lines.len() - self.offset.1 - 1;
+    } else {
+      self.offset.1 += self.view_size.1;
+      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
+        self.offset.1 = self.lines.len() - self.view_size.1;
+      }
+    }
+
+    if self.offset.0 + self.cursor.0 >=
+       self.lines[self.offset.1 + self.cursor.1].len() {
+      self.end();
+    }
+
+    self
+  }
+
+  fn home(&mut self) -> &mut Self {
     self.offset.0 = 0;
     self.cursor.0 = 0;
+
+    self
   }
 
-  fn end(&mut self) {
+  fn end(&mut self) -> &mut Self {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
     let view_cols = self.view_size.0;
@@ -281,25 +328,8 @@ impl Buffer {
       self.offset.0 = line_len + 1 - view_cols;
       self.cursor.0 = view_cols - 1;
     }
-  }
 
-  fn status(&self) -> String {
-    let curr_col = 1 + self.offset.0 + self.cursor.0;
-    let curr_row = 1 + self.offset.1 + self.cursor.1;
-    let rows_in_buf = self.lines.len();
-    let cols_in_row = //if curr_row < rows_in_buf {
-      self.lines[self.offset.1 + self.cursor.1].len();
-    // } else {
-    // 0
-    // };
-    format!(// "{} - {:2}/{:2} - {:3}/{:3}",
-            "{}{} - {}/{} - {}/{}",
-            self.name(),
-            if self.dirty { "*" } else { "" },
-            curr_col,
-            cols_in_row,
-            curr_row,
-            rows_in_buf)
+    self
   }
 }
 

@@ -8,3 +8,7 @@ textbox = { path = "textbox" }
 
 [workspace]
 members = [".", "textbox"]
+
+[replace]
+"winapi:0.2.8" = { git = "https://github.com/oconnor0/winapi-rs.git", rev = "textbox" }
+"wio:0.1.2" = { git = "https://github.com/oconnor0/wio-rs.git", rev = "textbox" }

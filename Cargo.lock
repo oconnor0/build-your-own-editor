@@ -1,8 +1,14 @@
 [root]
-name = "build-your-own-editor"
+name = "textbox"
 version = "0.0.1"
 dependencies = [
- "textbox 0.0.1",
+ "bit-set 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
+ "termbox-sys 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
+ "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wio 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -33,6 +39,13 @@ version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "build-your-own-editor"
+version = "0.0.1"
+dependencies = [
+ "textbox 0.0.1",
+]
+
+[[package]]
 name = "kernel32-sys"
 version = "0.2.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -52,19 +65,6 @@ version = "0.2.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "textbox"
-version = "0.0.1"
-dependencies = [
- "bit-set 0.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "bitflags 0.7.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
- "num-traits 0.1.35 (registry+https://github.com/rust-lang/crates.io-index)",
- "termbox-sys 0.2.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "winapi 0.2.8 (git+https://github.com/oconnor0/winapi-rs.git?rev=textbox)",
- "wio 0.1.2 (git+https://github.com/oconnor0/wio-rs.git?rev=textbox)",
-]
-
-[[package]]
 name = "user32-sys"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -82,6 +82,7 @@ source = "git+https://github.com/oconnor0/winapi-rs.git?rev=textbox#52c61af42e86
 name = "winapi"
 version = "0.2.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+replace = "winapi 0.2.8 (git+https://github.com/oconnor0/winapi-rs.git?rev=textbox)"
 
 [[package]]
 name = "winapi-build"
@@ -91,13 +92,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "wio"
 version = "0.1.2"
-source = "git+https://github.com/oconnor0/wio-rs.git?rev=textbox#a181804063e573d94f94c28d67b3f87a92f0f774"
+source = "git+https://github.com/oconnor0/wio-rs.git?rev=textbox#86feb99c1ad2357d6518ed8a1a1f042651a3fc36"
 dependencies = [
  "advapi32-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "kernel32-sys 0.2.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "user32-sys 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
+
+[[package]]
+name = "wio"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+replace = "wio 0.1.2 (git+https://github.com/oconnor0/wio-rs.git?rev=textbox)"
 
 [metadata]
 "checksum advapi32-sys 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e06588080cb19d0acb6739808aafa5f26bfb2ca015b2b6370028b44cf7cb8a9a"
@@ -112,3 +119,4 @@ dependencies = [
 "checksum winapi 0.2.8 (registry+https://github.com/rust-lang/crates.io-index)" = "167dc9d6949a9b857f3451275e911c3f44255842c1f7a76f33c55103a909087a"
 "checksum winapi-build 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)" = "2d315eee3b34aca4797b2da6b13ed88266e6d612562a0c46390af8299fc699bc"
 "checksum wio 0.1.2 (git+https://github.com/oconnor0/wio-rs.git?rev=textbox)" = "<none>"
+"checksum wio 0.1.2 (registry+https://github.com/rust-lang/crates.io-index)" = "ae5a4e42c0d7f399771f3f2f7b56d22e0a51e5915c9d8f7b5bf7e1b8e056fc3d"

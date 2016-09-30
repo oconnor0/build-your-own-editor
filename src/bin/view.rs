@@ -366,74 +366,74 @@ fn main() {
       // let mut x = 0;
       'event_loop: loop {
         {
-          let e = tbox.pop_event();
-          // println!("{:?}", e);
-          match e {
-            Some(Event::Key(_, CTRL, Key::Char('Q'))) => break 'arg_loop,
-            Some(Event::Key(_, _, Key::Escape)) => break 'event_loop,
-            Some(Event::Key(_, CTRL, Key::Char('S'))) => {
-              buf.save().unwrap();
-              changed = true;
+          if let Some(e) = tbox.pop_event() {
+            match e {
+              Event::Key(_, CTRL, Key::Char('Q')) => break 'arg_loop,
+              Event::Key(_, _, Key::Escape) => break 'event_loop,
+              Event::Key(_, CTRL, Key::Char('S')) => {
+                buf.save().unwrap();
+                changed = true;
+              }
+              Event::Key(_, _, Key::PageUp) => {
+                buf.page_up();
+                changed = true;
+              }
+              Event::Key(_, _, Key::Up) => {
+                buf.cursor_up();
+                changed = true;
+              }
+              Event::Key(_, _, Key::Down) => {
+                buf.cursor_down();
+                changed = true;
+              }
+              Event::Key(_, _, Key::Left) => {
+                buf.cursor_left();
+                changed = true;
+              }
+              Event::Key(_, _, Key::Right) => {
+                buf.cursor_right();
+                changed = true;
+              }
+              Event::Key(_, _, Key::PageDown) => {
+                buf.page_down();
+                changed = true;
+              }
+              Event::Key(_, _, Key::End) => {
+                buf.end();
+                changed = true;
+              }
+              Event::Key(_, _, Key::Home) => {
+                buf.home();
+                changed = true;
+              }
+              Event::Key(ch, _, Key::Char(_)) => {
+                buf.insert(ch);
+                changed = true;
+              }
+              Event::Key(_, _, Key::Enter) => {
+                buf.insert('\n');
+                changed = true;
+              }
+              Event::Key(_, _, Key::Backspace) => {
+                buf.insert('\x08');
+                changed = true;
+              }
+              Event::Key(_, _, Key::Delete) => {
+                buf.insert('\x7f');
+                changed = true;
+              }
+              Event::Key(_, _, Key::Tab) => {
+                buf.insert(' ');
+                buf.insert(' ');
+                changed = true;
+              }
+              // Some(Event::Key(c, k, m)) => {
+              //   // println!("({:?}, {:?}, {:?})", c, k, m);
+              //   // ch = c;
+              //   // changed = true;
+              // }
+              _ => (),
             }
-            Some(Event::Key(_, _, Key::PageUp)) => {
-              buf.page_up();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Up)) => {
-              buf.cursor_up();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Down)) => {
-              buf.cursor_down();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Left)) => {
-              buf.cursor_left();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Right)) => {
-              buf.cursor_right();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::PageDown)) => {
-              buf.page_down();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::End)) => {
-              buf.end();
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Home)) => {
-              buf.home();
-              changed = true;
-            }
-            Some(Event::Key(ch, _, Key::Char(_))) => {
-              buf.insert(ch);
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Enter)) => {
-              buf.insert('\n');
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Backspace)) => {
-              buf.insert('\x08');
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Delete)) => {
-              buf.insert('\x7f');
-              changed = true;
-            }
-            Some(Event::Key(_, _, Key::Tab)) => {
-              buf.insert(' ');
-              buf.insert(' ');
-              changed = true;
-            }
-            // Some(Event::Key(c, k, m)) => {
-            //   // println!("({:?}, {:?}, {:?})", c, k, m);
-            //   // ch = c;
-            //   // changed = true;
-            // }
-            _ => (),
           }
         }
         {

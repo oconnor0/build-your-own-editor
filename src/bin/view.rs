@@ -54,11 +54,10 @@ impl Buffer for CommandBar {
   fn status(&self) -> String { "command bar".to_string() }
 
   fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool) {
-    print!("painting active? {:?} CommandBar at {:?}", active, at);
-    tbox.set_cells(at, &self.prompt, DEFAULT, DEFAULT);
-    let at = at + self.prompt.len().to_col() + 1.to_col();
-    tbox.set_cells(at, &self.entry, DEFAULT, DEFAULT);
     if active {
+      tbox.set_cells(at, &self.prompt, DEFAULT, DEFAULT);
+      let at = at + self.prompt.len().to_col() + 1.to_col();
+      tbox.set_cells(at, &self.entry, DEFAULT, DEFAULT);
       let at = at + self.entry.len().to_col();
       tbox.set_cursor(at);
     }

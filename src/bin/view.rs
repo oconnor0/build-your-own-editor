@@ -36,6 +36,55 @@ struct FileEdit {
   dirty: bool,
 }
 
+struct CommandBar {
+  prompt: String,
+  entry: String,
+  view: Coord,
+  // handler:
+}
+
+impl CommandBar {
+  fn new(view: Coord) -> Self {
+    CommandBar { prompt: ":".to_string(), entry: String::new(), view: view }
+  }
+}
+
+impl Buffer for CommandBar {
+  fn name(&self) -> &str { &"command bar" }
+  fn status(&self) -> String { "command bar".to_string() }
+
+  fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool) {
+    print!("painting active? {:?} CommandBar at {:?}", active, at);
+    tbox.set_cells(at, &self.prompt, DEFAULT, DEFAULT);
+    let at = at + self.prompt.len().to_col() + 1.to_col();
+    tbox.set_cells(at, &self.entry, DEFAULT, DEFAULT);
+    if active {
+      let at = at + self.entry.len().to_col();
+      tbox.set_cursor(at);
+    }
+  }
+}
+
+
+
+impl Editable for CommandBar {
+  fn insert(&mut self, ch: char) {
+    match ch {
+      '\n' => {
+        println!("done typing command, call handler!");
+      }
+      '\x08' => {
+        // backspace
+        if self.entry.len() > 0 {
+          self.entry.pop();
+        }
+      }
+      '\x7f' => (), // delete - ignore
+      _ => self.entry.push(ch),
+    }
+  }
+}
+
 impl FileEdit {
   fn from_file(view_size: Coord, filename: &str) -> Self {
     use std::io::{BufRead, BufReader};
@@ -353,7 +402,7 @@ fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
   let status = buf.status();
   for col in 0..cols {
     tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
-    tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
+    // tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
   }
   tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
                  &status,
@@ -371,7 +420,10 @@ fn main() {
     tbox.present();
 
     let mut buf = FileEdit::from_file(size - 2.to_row(), &arg);
-    buf.paint(&mut tbox, zero(), true);
+    let mut cmd = CommandBar::new(Coord(size.col(), 1));
+    let mut edit_mode = true;
+    buf.paint(&mut tbox, zero(), edit_mode);
+    cmd.paint(&mut tbox, Coord(0, size.row() - 1), !edit_mode);
     paint_status_bar(&mut tbox, &buf);
     tbox.present();
 
@@ -390,7 +442,7 @@ fn main() {
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('G')) => {
-                // buf.save().unwrap();
+                edit_mode = false;
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('F')) => {
@@ -438,24 +490,29 @@ fn main() {
                 changed = true;
               }
               Event::Key(ch, _, Key::Char(_)) => {
-                buf.insert(ch);
+                if edit_mode { buf.insert(ch) } else { cmd.insert(ch) }
                 changed = true;
               }
               Event::Key(_, _, Key::Enter) => {
-                buf.insert('\n');
+                if edit_mode { buf.insert('\n') } else { cmd.insert('\n') }
                 changed = true;
               }
               Event::Key(_, _, Key::Backspace) => {
-                buf.insert('\x08');
+                if edit_mode { buf.insert('\x08') } else { cmd.insert('\x08') }
                 changed = true;
               }
               Event::Key(_, _, Key::Delete) => {
-                buf.insert('\x7f');
+                if edit_mode { buf.insert('\x7f') } else { cmd.insert('\x7f') }
                 changed = true;
               }
               Event::Key(_, _, Key::Tab) => {
-                buf.insert(' ');
-                buf.insert(' ');
+                if edit_mode {
+                  buf.insert(' ');
+                  buf.insert(' ');
+                } else {
+                  cmd.insert(' ');
+                  cmd.insert(' ');
+                }
                 changed = true;
               }
               // Some(Event::Key(c, k, m)) => {
@@ -470,7 +527,8 @@ fn main() {
         {
           if changed {
             tbox.clear();
-            buf.paint(&mut tbox, Coord(0, 0), true);
+            buf.paint(&mut tbox, zero(), edit_mode);
+            cmd.paint(&mut tbox, Coord(0, size.row() - 1), !edit_mode);
             paint_status_bar(&mut tbox, &buf);
             changed = false;
             tbox.present();

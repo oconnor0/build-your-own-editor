@@ -5,6 +5,12 @@ use std::io;
 use std::io::{BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
 
+trait Buffer {
+  fn name(&self) -> &str;
+  fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool);
+  fn status(&self) -> String;
+}
+
 trait Navigable {
   fn cursor_up(&mut self) -> &mut Self;
   fn cursor_down(&mut self) -> &mut Self;
@@ -15,6 +21,10 @@ trait Navigable {
   fn page_down(&mut self) -> &mut Self;
   fn home(&mut self) -> &mut Self;
   fn end(&mut self) -> &mut Self;
+}
+
+trait Editable {
+  fn insert(&mut self, ch: char);
 }
 
 struct FileEdit {
@@ -55,93 +65,6 @@ impl FileEdit {
     }
   }
 
-  fn name(&self) -> &str {
-    match self.path {
-      Some(ref path) => path.to_str().unwrap(),
-      None => "-- buffer --",
-    }
-  }
-
-  fn paint(&self, tbox: &mut Textbox, global: Coord) {
-    // TODO: Only set cursor if active buffer.
-    tbox.set_cursor(global + self.cursor);
-    for (row, line) in self.lines[self.offset.row()..].iter().enumerate() {
-      if row >= self.view_size.row() {
-        break;
-      }
-      // let mut initial_spaces = true;
-      if self.offset.col() < line.len() {
-        for (col, ch) in line[self.offset.col()..].chars().enumerate() {
-          if col >= self.view_size.col() {
-            break;
-            // } else if ch == ' ' {
-            //   tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | DEFAULT, DEFAULT);
-          } else {
-            // initial_spaces = false;
-            tbox.set_cell(Coord(col, row), ch, DEFAULT, DEFAULT);
-          }
-        }
-      }
-    }
-  }
-
-  fn insert(&mut self, ch: char) {
-    use std::cmp::min;
-    self.dirty = true;
-
-    let col_at = self.offset.col() + self.cursor.col();
-    let cols = self.lines[self.offset.row() + self.cursor.row()].len();
-    let row_at = self.offset.row() + self.cursor.row();
-    match ch {
-      '\n' => {
-        let curr = self.lines[row_at][0..min(col_at, cols)].to_string();
-        let next = self.lines[row_at][min(col_at, cols)..cols].to_string();
-        self.lines[row_at] = curr;
-        self.lines.insert(row_at + 1, next);
-        self.cursor_down();
-        self.home();
-      }
-      '\x08' => {
-        // backspace
-        let curr_row = self.offset.1 + self.cursor.1;
-        let curr_col = self.offset.0 + self.cursor.0;
-        if curr_col == 0 {
-          if curr_row > 0 {
-            // join lines
-            let prev_row = curr_row - 1;
-            self.cursor_up();
-            self.end();
-            let curr_str = self.lines.remove(curr_row);
-            self.lines[prev_row].push_str(&curr_str);
-          }
-        } else {
-          self.lines[curr_row].remove(curr_col - 1);
-          self.cursor_left();
-        }
-      }
-      '\x7f' => {
-        // delete
-        let curr_row = self.offset.1 + self.cursor.1;
-        let curr_col = self.offset.0 + self.cursor.0;
-        let line_len = self.lines[curr_row].len();
-        if curr_col == line_len {
-          if curr_row < self.lines.len() - 1 {
-            // join lines
-            let next_row = curr_row + 1;
-            let next_str = self.lines.remove(next_row);
-            self.lines[curr_row].push_str(&next_str);
-          }
-        } else {
-          self.lines[curr_row].remove(curr_col);
-        }
-      }
-      _ => {
-        self.lines[row_at].insert(col_at, ch);
-        self.cursor_right();
-      }
-    }
-  }
-
   fn save(&mut self) -> io::Result<usize> {
     use std::fs::OpenOptions;
 
@@ -167,6 +90,39 @@ impl FileEdit {
       }
     } else {
       Ok(0)
+    }
+  }
+}
+
+impl Buffer for FileEdit {
+  fn name(&self) -> &str {
+    match self.path {
+      Some(ref path) => path.to_str().unwrap(),
+      None => "-- buffer --",
+    }
+  }
+
+  fn paint(&self, tbox: &mut Textbox, global: Coord, active: bool) {
+    if active {
+      tbox.set_cursor(global + self.cursor);
+    }
+    for (row, line) in self.lines[self.offset.row()..].iter().enumerate() {
+      if row >= self.view_size.row() {
+        break;
+      }
+      // let mut initial_spaces = true;
+      if self.offset.col() < line.len() {
+        for (col, ch) in line[self.offset.col()..].chars().enumerate() {
+          if col >= self.view_size.col() {
+            break;
+            // } else if ch == ' ' {
+            //   tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | DEFAULT, DEFAULT);
+          } else {
+            // initial_spaces = false;
+            tbox.set_cell(Coord(col, row), ch, DEFAULT, DEFAULT);
+          }
+        }
+      }
     }
   }
 
@@ -333,6 +289,65 @@ impl Navigable for FileEdit {
   }
 }
 
+impl Editable for FileEdit {
+  fn insert(&mut self, ch: char) {
+    use std::cmp::min;
+    self.dirty = true;
+
+    let col_at = self.offset.col() + self.cursor.col();
+    let cols = self.lines[self.offset.row() + self.cursor.row()].len();
+    let row_at = self.offset.row() + self.cursor.row();
+    match ch {
+      '\n' => {
+        let curr = self.lines[row_at][0..min(col_at, cols)].to_string();
+        let next = self.lines[row_at][min(col_at, cols)..cols].to_string();
+        self.lines[row_at] = curr;
+        self.lines.insert(row_at + 1, next);
+        self.cursor_down();
+        self.home();
+      }
+      '\x08' => {
+        // backspace
+        let curr_row = self.offset.1 + self.cursor.1;
+        let curr_col = self.offset.0 + self.cursor.0;
+        if curr_col == 0 {
+          if curr_row > 0 {
+            // join lines
+            let prev_row = curr_row - 1;
+            self.cursor_up();
+            self.end();
+            let curr_str = self.lines.remove(curr_row);
+            self.lines[prev_row].push_str(&curr_str);
+          }
+        } else {
+          self.lines[curr_row].remove(curr_col - 1);
+          self.cursor_left();
+        }
+      }
+      '\x7f' => {
+        // delete
+        let curr_row = self.offset.1 + self.cursor.1;
+        let curr_col = self.offset.0 + self.cursor.0;
+        let line_len = self.lines[curr_row].len();
+        if curr_col == line_len {
+          if curr_row < self.lines.len() - 1 {
+            // join lines
+            let next_row = curr_row + 1;
+            let next_str = self.lines.remove(next_row);
+            self.lines[curr_row].push_str(&next_str);
+          }
+        } else {
+          self.lines[curr_row].remove(curr_col);
+        }
+      }
+      _ => {
+        self.lines[row_at].insert(col_at, ch);
+        self.cursor_right();
+      }
+    }
+  }
+}
+
 fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
   let Coord(cols, rows) = tbox.size();
   let status = buf.status();
@@ -356,7 +371,7 @@ fn main() {
     tbox.present();
 
     let mut buf = FileEdit::from_file(size - 2.to_row(), &arg);
-    buf.paint(&mut tbox, zero());
+    buf.paint(&mut tbox, zero(), true);
     paint_status_bar(&mut tbox, &buf);
     tbox.present();
 
@@ -372,6 +387,14 @@ fn main() {
               Event::Key(_, _, Key::Escape) => break 'event_loop,
               Event::Key(_, CTRL, Key::Char('S')) => {
                 buf.save().unwrap();
+                changed = true;
+              }
+              Event::Key(_, CTRL, Key::Char('G')) => {
+                // buf.save().unwrap();
+                changed = true;
+              }
+              Event::Key(_, CTRL, Key::Char('F')) => {
+                // buf.save().unwrap();
                 changed = true;
               }
               Event::Key(_, _, Key::Up) |
@@ -447,7 +470,7 @@ fn main() {
         {
           if changed {
             tbox.clear();
-            buf.paint(&mut tbox, Coord(0, 0));
+            buf.paint(&mut tbox, Coord(0, 0), true);
             paint_status_bar(&mut tbox, &buf);
             changed = false;
             tbox.present();

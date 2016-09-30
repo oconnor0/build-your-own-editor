@@ -374,36 +374,44 @@ fn main() {
                 buf.save().unwrap();
                 changed = true;
               }
-              Event::Key(_, _, Key::PageUp) => {
-                buf.page_up();
-                changed = true;
-              }
-              Event::Key(_, _, Key::Up) => {
+              Event::Key(_, _, Key::Up) |
+              Event::Key(_, CTRL, Key::Char('K')) => {
                 buf.cursor_up();
                 changed = true;
               }
-              Event::Key(_, _, Key::Down) => {
+              Event::Key(_, _, Key::Down) |
+              Event::Key(_, CTRL, Key::Char('J')) => {
                 buf.cursor_down();
                 changed = true;
               }
-              Event::Key(_, _, Key::Left) => {
+              Event::Key(_, _, Key::Left) |
+              Event::Key(_, CTRL, Key::Char('H')) => {
                 buf.cursor_left();
                 changed = true;
               }
-              Event::Key(_, _, Key::Right) => {
+              Event::Key(_, _, Key::Right) |
+              Event::Key(_, CTRL, Key::Char('L')) => {
                 buf.cursor_right();
                 changed = true;
               }
-              Event::Key(_, _, Key::PageDown) => {
+              Event::Key(_, _, Key::PageUp) |
+              Event::Key(_, CTRL_SHIFT, Key::Char('K')) => {
+                buf.page_up();
+                changed = true;
+              }
+              Event::Key(_, _, Key::PageDown) |
+              Event::Key(_, CTRL_SHIFT, Key::Char('J')) => {
                 buf.page_down();
                 changed = true;
               }
-              Event::Key(_, _, Key::End) => {
-                buf.end();
+              Event::Key(_, _, Key::Home) |
+              Event::Key(_, CTRL_SHIFT, Key::Char('H')) => {
+                buf.home();
                 changed = true;
               }
-              Event::Key(_, _, Key::Home) => {
-                buf.home();
+              Event::Key(_, _, Key::End) |
+              Event::Key(_, CTRL_SHIFT, Key::Char('L')) => {
+                buf.end();
                 changed = true;
               }
               Event::Key(ch, _, Key::Char(_)) => {

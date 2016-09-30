@@ -79,6 +79,12 @@ mod types {
       const CTRL        = 0x000c, //RIGHT_CTRL.bits|LEFT_CTRL.bits,
 
       const SHIFT       = 0x0010,
+
+      const ALT_CTRL    = ALT.bits|CTRL.bits,
+      const ALT_SHIFT   = ALT.bits|SHIFT.bits,
+      const CTRL_SHIFT  = CTRL.bits|SHIFT.bits,
+      const ALT_CTRL_SHIFT = ALT.bits|CTRL.bits|SHIFT.bits,
+
       // const CAPS_LOCK   = 0x0020,
       // const NUM_LOCK    = 0x0040,
       // const SCROLL_LOCK = 0x0080,

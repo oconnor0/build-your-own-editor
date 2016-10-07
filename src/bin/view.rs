@@ -498,19 +498,6 @@ impl Editable for FileEdit {
   }
 }
 
-// fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
-//   let Coord(cols, rows) = tbox.size();
-//   let status = buf.status();
-//   for col in 0..cols {
-//     tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
-//     // tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
-//   }
-//   tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
-//                  &status,
-//                  DEFAULT,
-//                  DEFAULT | REVERSE);
-// }
-
 fn main() {
   let mut tbox = TextboxImpl::init().unwrap();
   let size = tbox.size();
@@ -523,9 +510,7 @@ fn main() {
     let buf = FileEdit::from_file(size - 2.to_row(), &arg);
     let mut cmd = CommandBar::new(Coord(size.col(), 1), buf);
     let mut edit_mode = true;
-    // buf.paint(&mut tbox, zero(), edit_mode);
     cmd.paint(&mut tbox, zero(), edit_mode);
-    // paint_status_bar(&mut tbox, &buf);
     tbox.present();
 
     {
@@ -547,7 +532,6 @@ fn main() {
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('F')) => {
-                // buf.save().unwrap();
                 changed = true;
               }
               Event::Key(_, _, Key::Up) |
@@ -596,8 +580,6 @@ fn main() {
               }
               Event::Key(_, _, Key::Enter) => {
                 cmd.insert('\n');
-                // TODO: cmd should probably control the return the edit mode.
-                // edit_mode = false;
                 changed = true;
               }
               Event::Key(_, _, Key::Backspace) => {
@@ -613,11 +595,6 @@ fn main() {
                 cmd.insert(' ');
                 changed = true;
               }
-              // Some(Event::Key(c, k, m)) => {
-              //   // println!("({:?}, {:?}, {:?})", c, k, m);
-              //   // ch = c;
-              //   // changed = true;
-              // }
               _ => (),
             }
           }
@@ -626,7 +603,6 @@ fn main() {
           if changed {
             tbox.clear();
             cmd.paint(&mut tbox, zero(), edit_mode);
-            // paint_status_bar(&mut tbox, &buf);
             changed = false;
             tbox.present();
           }

@@ -6,9 +6,9 @@ extern crate wio;
 extern crate kernel32;
 
 use bit_set::BitSet;
-use std::collections::VecDeque;
-use self::wio::console::{CharInfo, Input, InputBuffer, ScreenBuffer};
 use self::winapi as w;
+use self::wio::console::{CharInfo, Input, InputBuffer, ScreenBuffer};
+use std::collections::VecDeque;
 
 pub use types::*;
 

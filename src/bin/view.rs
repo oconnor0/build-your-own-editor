@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 extern crate textbox;
-use textbox::*;
 use std::io;
 use std::io::{BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
+use textbox::*;
 
 trait Buffer {
   fn name(&self) -> &str;
@@ -502,11 +502,7 @@ fn main() {
                 changed = true;
               }
               Event::Key(ch, _, Key::Char(_)) => {
-                if edit_mode {
-                  buf.insert(ch)
-                } else {
-                  cmd.insert(ch)
-                }
+                if edit_mode { buf.insert(ch) } else { cmd.insert(ch) }
                 changed = true;
               }
               Event::Key(_, _, Key::Enter) => {
@@ -520,19 +516,11 @@ fn main() {
                 changed = true;
               }
               Event::Key(_, _, Key::Backspace) => {
-                if edit_mode {
-                  buf.insert('\x08')
-                } else {
-                  cmd.insert('\x08')
-                }
+                if edit_mode { buf.insert('\x08') } else { cmd.insert('\x08') }
                 changed = true;
               }
               Event::Key(_, _, Key::Delete) => {
-                if edit_mode {
-                  buf.insert('\x7f')
-                } else {
-                  cmd.insert('\x7f')
-                }
+                if edit_mode { buf.insert('\x7f') } else { cmd.insert('\x7f') }
                 changed = true;
               }
               Event::Key(_, _, Key::Tab) => {

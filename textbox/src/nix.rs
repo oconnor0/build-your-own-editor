@@ -5,9 +5,9 @@
 extern crate termbox_sys;
 
 use self::termbox_sys::*;
+use std::char;
 use std::ops::Drop;
 use std::os::raw::c_int;
-use std::char;
 
 pub use types::*;
 

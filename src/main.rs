@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 extern crate textbox;
-use textbox::*;
 use std::path::PathBuf;
+use textbox::*;
 
 struct Buffer {
   path: Option<PathBuf>,

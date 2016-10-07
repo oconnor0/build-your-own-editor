@@ -21,6 +21,8 @@ trait Navigable {
   fn page_down(&mut self) -> &mut Self;
   fn home(&mut self) -> &mut Self;
   fn end(&mut self) -> &mut Self;
+
+  fn goto_line(&mut self, line: usize);
 }
 
 trait Editable {
@@ -39,8 +41,7 @@ struct FileEdit {
 struct CommandBar {
   prompt: String,
   entry: String,
-  view: Coord,
-  // handler:
+  view: Coord, // handler:
 }
 
 impl CommandBar {
@@ -335,7 +336,19 @@ impl Navigable for FileEdit {
 
     self
   }
+
+  fn goto_line(&mut self, line: usize) {
+    let len = self.lines.len();
+    let line = if line >= len { len - 1 } else { line };
+    if line < self.view_size.1 {
+      self.offset.1 = 0;
+      self.cursor.1 = line;
+    } else {
+      self.offset.1 = line - self.cursor.1;
+    }
+  }
 }
+
 
 impl Editable for FileEdit {
   fn insert(&mut self, ch: char) {
@@ -489,19 +502,37 @@ fn main() {
                 changed = true;
               }
               Event::Key(ch, _, Key::Char(_)) => {
-                if edit_mode { buf.insert(ch) } else { cmd.insert(ch) }
+                if edit_mode {
+                  buf.insert(ch)
+                } else {
+                  cmd.insert(ch)
+                }
                 changed = true;
               }
               Event::Key(_, _, Key::Enter) => {
-                if edit_mode { buf.insert('\n') } else { cmd.insert('\n') }
+                if edit_mode {
+                  buf.insert('\n')
+                } else {
+                  cmd.insert('\n');
+                  // TODO: cmd should probably control the return the edit mode.
+                  edit_mode = false;
+                }
                 changed = true;
               }
               Event::Key(_, _, Key::Backspace) => {
-                if edit_mode { buf.insert('\x08') } else { cmd.insert('\x08') }
+                if edit_mode {
+                  buf.insert('\x08')
+                } else {
+                  cmd.insert('\x08')
+                }
                 changed = true;
               }
               Event::Key(_, _, Key::Delete) => {
-                if edit_mode { buf.insert('\x7f') } else { cmd.insert('\x7f') }
+                if edit_mode {
+                  buf.insert('\x7f')
+                } else {
+                  cmd.insert('\x7f')
+                }
                 changed = true;
               }
               Event::Key(_, _, Key::Tab) => {

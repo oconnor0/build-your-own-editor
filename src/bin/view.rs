@@ -9,6 +9,11 @@ trait Buffer {
   fn name(&self) -> &str;
   fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool);
   fn status(&self) -> String;
+  fn view_size(&self) -> Coord;
+}
+
+trait Save {
+  fn save(&mut self) -> io::Result<usize>;
 }
 
 trait Navigable {
@@ -22,7 +27,7 @@ trait Navigable {
   fn home(&mut self) -> &mut Self;
   fn end(&mut self) -> &mut Self;
 
-  fn goto_line(&mut self, line: usize);
+  fn goto_line(&mut self, line: usize) -> &mut Self ;
 }
 
 trait Editable {
@@ -34,28 +39,50 @@ struct FileEdit {
   lines: Vec<String>,
   offset: Coord,
   cursor: Coord,
-  view_size: Coord,
+  v_size: Coord,
   dirty: bool,
 }
 
-struct CommandBar {
+struct CommandBar<B> {
   prompt: String,
   entry: String,
-  view: Coord, // handler:
+  v_size: Coord,
+  buf: Box<B>,
+  edit_mode: bool,
 }
 
-impl CommandBar {
-  fn new(view: Coord) -> Self {
-    CommandBar { prompt: ":".to_string(), entry: String::new(), view: view }
+impl<B> CommandBar<B> {
+  fn new(v_size: Coord, buf: B) -> Self {
+    CommandBar {
+      prompt: ":".to_string(),
+      entry: String::new(),
+      v_size: v_size,
+      buf: Box::new(buf),
+      edit_mode: true,
+    }
   }
 }
 
-impl Buffer for CommandBar {
+impl<B : Buffer> Buffer for CommandBar<B> {
   fn name(&self) -> &str { &"command bar" }
   fn status(&self) -> String { "command bar".to_string() }
 
   fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool) {
-    if active {
+    self.buf.paint(tbox, at, active & self.edit_mode);
+    let at = at + (self.buf.view_size().row() + 1).to_row();
+
+    let Coord(cols, rows) = tbox.size();
+    let status = self.buf.status();
+    for col in 0..cols {
+      tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
+      // tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
+    }
+    tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
+                   &status,
+                   DEFAULT,
+                   DEFAULT | REVERSE);
+
+    if active & !self.edit_mode {
       tbox.set_cells(at, &self.prompt, DEFAULT, DEFAULT);
       let at = at + self.prompt.len().to_col() + 1.to_col();
       tbox.set_cells(at, &self.entry, DEFAULT, DEFAULT);
@@ -63,30 +90,87 @@ impl Buffer for CommandBar {
       tbox.set_cursor(at);
     }
   }
+
+  fn view_size(&self) -> Coord {
+    Coord(self.v_size.col(), self.v_size.row() + self.buf.view_size().row())
+  }
 }
 
-
-
-impl Editable for CommandBar {
+impl<B : Editable> Editable for CommandBar<B> {
   fn insert(&mut self, ch: char) {
-    match ch {
-      '\n' => {
-        println!("done typing command, call handler!");
-      }
-      '\x08' => {
-        // backspace
-        if self.entry.len() > 0 {
-          self.entry.pop();
+    if self.edit_mode {
+      self.buf.insert(ch);
+    } else {
+      match ch {
+        '\n' => {
+          println!("done typing command, call handler!");
         }
+        '\x08' => {
+          // backspace
+          if self.entry.len() > 0 {
+            self.entry.pop();
+          }
+        }
+        '\x7f' => (), // delete - ignore
+        _ => self.entry.push(ch),
       }
-      '\x7f' => (), // delete - ignore
-      _ => self.entry.push(ch),
     }
   }
 }
 
+impl<B : Navigable> Navigable for CommandBar<B> {
+  fn cursor_up(&mut self) -> &mut Self {
+    self.buf.cursor_up();
+    self
+  }
+
+  fn cursor_down(&mut self) -> &mut Self {
+    self.buf.cursor_down();
+    self
+  }
+
+  fn cursor_left(&mut self) -> &mut Self {
+    self.buf.cursor_left();
+    self
+  }
+
+  fn cursor_right(&mut self) -> &mut Self {
+    self.buf.cursor_right();
+    self
+  }
+
+  fn page_up(&mut self) -> &mut Self {
+    self.buf.page_up();
+    self
+  }
+
+  fn page_down(&mut self) -> &mut Self {
+    self.buf.page_down();
+    self
+  }
+
+  fn home(&mut self) -> &mut Self {
+    self.buf.home();
+    self
+  }
+
+  fn end(&mut self) -> &mut Self {
+    self.buf.end();
+    self
+  }
+
+  fn goto_line(&mut self, line: usize) -> &mut Self {
+    self.buf.goto_line(line);
+    self
+  }
+}
+
+impl<B : Save> Save for CommandBar<B> {
+  fn save(&mut self) -> io::Result<usize> { self.buf.save() }
+}
+
 impl FileEdit {
-  fn from_file(view_size: Coord, filename: &str) -> Self {
+  fn from_file(v_size: Coord, filename: &str) -> Self {
     use std::io::{BufRead, BufReader};
     use std::fs::File;
 
@@ -109,11 +193,13 @@ impl FileEdit {
       lines: lines,
       offset: zero(),
       cursor: zero(),
-      view_size: view_size,
+      v_size: v_size,
       dirty: false,
     }
   }
+}
 
+impl Save for FileEdit {
   fn save(&mut self) -> io::Result<usize> {
     use std::fs::OpenOptions;
 
@@ -156,13 +242,13 @@ impl Buffer for FileEdit {
       tbox.set_cursor(global + self.cursor);
     }
     for (row, line) in self.lines[self.offset.row()..].iter().enumerate() {
-      if row >= self.view_size.row() {
+      if row >= self.v_size.row() {
         break;
       }
       // let mut initial_spaces = true;
       if self.offset.col() < line.len() {
         for (col, ch) in line[self.offset.col()..].chars().enumerate() {
-          if col >= self.view_size.col() {
+          if col >= self.v_size.col() {
             break;
             // } else if ch == ' ' {
             //   tbox.set_cell(Coord(col, row), 183 as char, BRIGHT | DEFAULT, DEFAULT);
@@ -193,6 +279,8 @@ impl Buffer for FileEdit {
             curr_row,
             rows_in_buf)
   }
+
+  fn view_size(&self) -> Coord { self.v_size }
 }
 
 impl Navigable for FileEdit {
@@ -216,8 +304,8 @@ impl Navigable for FileEdit {
   fn cursor_down(&mut self) -> &mut Self {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
       // do nothing
-    } else if self.cursor.row() >= self.view_size.row() - 1 {
-      self.cursor.1 = self.view_size.row() - 1;
+    } else if self.cursor.row() >= self.v_size.row() - 1 {
+      self.cursor.1 = self.v_size.row() - 1;
       self.offset.1 += 1;
     } else {
       self.cursor.1 += 1;
@@ -249,7 +337,7 @@ impl Navigable for FileEdit {
   fn cursor_right(&mut self) -> &mut Self {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
-    let view_cols = self.view_size.0;
+    let view_cols = self.v_size.0;
     let line_len = self.lines[offset_row + cursor_row].len();
 
     if self.offset.0 + self.cursor.0 >= line_len {
@@ -274,13 +362,13 @@ impl Navigable for FileEdit {
       // do nothing
     } else if self.offset.1 == 0 {
       self.cursor.1 = 0;
-    } else if self.offset.row() <= self.view_size.row() - 1 {
-      if self.cursor.row() > self.view_size.row() - self.offset.row() {
-        self.cursor.1 -= self.view_size.row() - self.offset.row();
+    } else if self.offset.row() <= self.v_size.row() - 1 {
+      if self.cursor.row() > self.v_size.row() - self.offset.row() {
+        self.cursor.1 -= self.v_size.row() - self.offset.row();
       }
       self.offset.1 = 0;
     } else {
-      self.offset.1 -= self.view_size.row();
+      self.offset.1 -= self.v_size.row();
     }
 
     if self.offset.0 + self.cursor.0 >=
@@ -294,14 +382,14 @@ impl Navigable for FileEdit {
   fn page_down(&mut self) -> &mut Self {
     if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
       // do nothing
-    } else if self.lines.len() < self.view_size.1 {
+    } else if self.lines.len() < self.v_size.1 {
       self.cursor.1 = self.lines.len() - 1;
-    } else if self.offset.1 >= self.lines.len() - self.view_size.1 {
+    } else if self.offset.1 >= self.lines.len() - self.v_size.1 {
       self.cursor.1 = self.lines.len() - self.offset.1 - 1;
     } else {
-      self.offset.1 += self.view_size.1;
-      if self.offset.1 + self.view_size.1 >= self.lines.len() - 1 {
-        self.offset.1 = self.lines.len() - self.view_size.1;
+      self.offset.1 += self.v_size.1;
+      if self.offset.1 + self.v_size.1 >= self.lines.len() - 1 {
+        self.offset.1 = self.lines.len() - self.v_size.1;
       }
     }
 
@@ -323,7 +411,7 @@ impl Navigable for FileEdit {
   fn end(&mut self) -> &mut Self {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
-    let view_cols = self.view_size.0;
+    let view_cols = self.v_size.0;
     let line_len = self.lines[offset_row + cursor_row].len();
 
     if view_cols >= line_len {
@@ -337,18 +425,19 @@ impl Navigable for FileEdit {
     self
   }
 
-  fn goto_line(&mut self, line: usize) {
+  fn goto_line(&mut self, line: usize) -> &mut Self {
     let len = self.lines.len();
     let line = if line >= len { len - 1 } else { line };
-    if line < self.view_size.1 {
+    if line < self.v_size.1 {
       self.offset.1 = 0;
       self.cursor.1 = line;
     } else {
       self.offset.1 = line - self.cursor.1;
     }
+
+    self
   }
 }
-
 
 impl Editable for FileEdit {
   fn insert(&mut self, ch: char) {
@@ -409,18 +498,18 @@ impl Editable for FileEdit {
   }
 }
 
-fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
-  let Coord(cols, rows) = tbox.size();
-  let status = buf.status();
-  for col in 0..cols {
-    tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
-    // tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
-  }
-  tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
-                 &status,
-                 DEFAULT,
-                 DEFAULT | REVERSE);
-}
+// fn paint_status_bar(tbox: &mut Textbox, buf: &FileEdit) {
+//   let Coord(cols, rows) = tbox.size();
+//   let status = buf.status();
+//   for col in 0..cols {
+//     tbox.set_cell(Coord(col, rows - 2), ' ', DEFAULT, DEFAULT | REVERSE);
+//     // tbox.set_cell(Coord(col, rows - 1), ' ', DEFAULT, DEFAULT);
+//   }
+//   tbox.set_cells(Coord(cols - 2 - status.len(), rows - 2),
+//                  &status,
+//                  DEFAULT,
+//                  DEFAULT | REVERSE);
+// }
 
 fn main() {
   let mut tbox = TextboxImpl::init().unwrap();
@@ -431,12 +520,12 @@ fn main() {
     tbox.clear();
     tbox.present();
 
-    let mut buf = FileEdit::from_file(size - 2.to_row(), &arg);
-    let mut cmd = CommandBar::new(Coord(size.col(), 1));
+    let buf = FileEdit::from_file(size - 2.to_row(), &arg);
+    let mut cmd = CommandBar::new(Coord(size.col(), 1), buf);
     let mut edit_mode = true;
-    buf.paint(&mut tbox, zero(), edit_mode);
-    cmd.paint(&mut tbox, Coord(0, size.row() - 1), !edit_mode);
-    paint_status_bar(&mut tbox, &buf);
+    // buf.paint(&mut tbox, zero(), edit_mode);
+    cmd.paint(&mut tbox, zero(), edit_mode);
+    // paint_status_bar(&mut tbox, &buf);
     tbox.present();
 
     {
@@ -450,7 +539,7 @@ fn main() {
               Event::Key(_, CTRL, Key::Char('Q')) => break 'arg_loop,
               Event::Key(_, _, Key::Escape) => break 'event_loop,
               Event::Key(_, CTRL, Key::Char('S')) => {
-                buf.save().unwrap();
+                cmd.save().unwrap();
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('G')) => {
@@ -463,74 +552,65 @@ fn main() {
               }
               Event::Key(_, _, Key::Up) |
               Event::Key(_, CTRL, Key::Char('K')) => {
-                buf.cursor_up();
+                cmd.cursor_up();
                 changed = true;
               }
               Event::Key(_, _, Key::Down) |
               Event::Key(_, CTRL, Key::Char('J')) => {
-                buf.cursor_down();
+                cmd.cursor_down();
                 changed = true;
               }
               Event::Key(_, _, Key::Left) |
               Event::Key(_, CTRL, Key::Char('H')) => {
-                buf.cursor_left();
+                cmd.cursor_left();
                 changed = true;
               }
               Event::Key(_, _, Key::Right) |
               Event::Key(_, CTRL, Key::Char('L')) => {
-                buf.cursor_right();
+                cmd.cursor_right();
                 changed = true;
               }
               Event::Key(_, _, Key::PageUp) |
               Event::Key(_, CTRL_SHIFT, Key::Char('K')) => {
-                buf.page_up();
+                cmd.page_up();
                 changed = true;
               }
               Event::Key(_, _, Key::PageDown) |
               Event::Key(_, CTRL_SHIFT, Key::Char('J')) => {
-                buf.page_down();
+                cmd.page_down();
                 changed = true;
               }
               Event::Key(_, _, Key::Home) |
               Event::Key(_, CTRL_SHIFT, Key::Char('H')) => {
-                buf.home();
+                cmd.home();
                 changed = true;
               }
               Event::Key(_, _, Key::End) |
               Event::Key(_, CTRL_SHIFT, Key::Char('L')) => {
-                buf.end();
+                cmd.end();
                 changed = true;
               }
               Event::Key(ch, _, Key::Char(_)) => {
-                if edit_mode { buf.insert(ch) } else { cmd.insert(ch) }
+                cmd.insert(ch);
                 changed = true;
               }
               Event::Key(_, _, Key::Enter) => {
-                if edit_mode {
-                  buf.insert('\n')
-                } else {
-                  cmd.insert('\n');
-                  // TODO: cmd should probably control the return the edit mode.
-                  edit_mode = false;
-                }
+                cmd.insert('\n');
+                // TODO: cmd should probably control the return the edit mode.
+                // edit_mode = false;
                 changed = true;
               }
               Event::Key(_, _, Key::Backspace) => {
-                if edit_mode { buf.insert('\x08') } else { cmd.insert('\x08') }
+                cmd.insert('\x08');
                 changed = true;
               }
               Event::Key(_, _, Key::Delete) => {
-                if edit_mode { buf.insert('\x7f') } else { cmd.insert('\x7f') }
+                cmd.insert('\x7f');
                 changed = true;
               }
               Event::Key(_, _, Key::Tab) => {
-                if edit_mode {
-                  buf.insert(' ');
-                  buf.insert(' ');
-                } else {
-                  cmd.insert(' ');
-                  cmd.insert(' ');
-                }
+                cmd.insert(' ');
+                cmd.insert(' ');
                 changed = true;
               }
               // Some(Event::Key(c, k, m)) => {
@@ -545,9 +625,8 @@ fn main() {
         {
           if changed {
             tbox.clear();
-            buf.paint(&mut tbox, zero(), edit_mode);
-            cmd.paint(&mut tbox, Coord(0, size.row() - 1), !edit_mode);
-            paint_status_bar(&mut tbox, &buf);
+            cmd.paint(&mut tbox, zero(), edit_mode);
+            // paint_status_bar(&mut tbox, &buf);
             changed = false;
             tbox.present();
           }

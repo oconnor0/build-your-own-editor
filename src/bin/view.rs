@@ -90,7 +90,7 @@ impl<B> CommandBar<B> {
   }
 }
 
-impl<B : Buffer> Buffer for CommandBar<B> {
+impl<B: Buffer> Buffer for CommandBar<B> {
   fn name(&self) -> &str { &"command bar" }
   fn status(&self) -> String {
     match self.mode {
@@ -131,7 +131,7 @@ impl<B : Buffer> Buffer for CommandBar<B> {
   }
 }
 
-impl<B : Editable + Navigable> Editable for CommandBar<B> {
+impl<B: Editable + Navigable> Editable for CommandBar<B> {
   fn insert(&mut self, ch: char) {
     if self.mode.is_edit() {
       self.buf.insert(ch);
@@ -159,7 +159,7 @@ impl<B : Editable + Navigable> Editable for CommandBar<B> {
   }
 }
 
-impl<B : Navigable> Navigable for CommandBar<B> {
+impl<B: Navigable> Navigable for CommandBar<B> {
   fn cursor_up(&mut self) -> &mut Self {
     if self.mode.is_edit() {
       self.buf.cursor_up();
@@ -224,7 +224,7 @@ impl<B : Navigable> Navigable for CommandBar<B> {
   }
 }
 
-impl<B : Save> Save for CommandBar<B> {
+impl<B: Save> Save for CommandBar<B> {
   fn save(&mut self) -> io::Result<usize> { self.buf.save() }
 }
 

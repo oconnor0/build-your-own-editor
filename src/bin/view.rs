@@ -27,7 +27,7 @@ trait Navigable {
   fn home(&mut self) -> &mut Self;
   fn end(&mut self) -> &mut Self;
 
-  fn goto_line(&mut self, line: usize) -> &mut Self ;
+  fn goto_line(&mut self, line: usize) -> &mut Self;
 }
 
 trait Editable {
@@ -74,8 +74,18 @@ impl<B> CommandBar<B> {
     }
   }
 
-  fn set_mode(&mut self, mode: Mode) -> &mut Self {
+  fn push_mode(&mut self, mode: Mode) -> &mut Self {
     self.mode = mode;
+    self
+  }
+
+
+  fn pop_mode(&mut self) -> &mut Self {
+    self.mode = match self.mode {
+      Mode::Edit => Mode::Edit,
+      Mode::Find => Mode::Edit,
+      Mode::Goto => Mode::Edit,
+    };
     self
   }
 }
@@ -88,7 +98,7 @@ impl<B : Buffer> Buffer for CommandBar<B> {
       Mode::Find => "*find*".to_string(),
       Mode::Goto => "*goto*".to_string(),
     }
-   }
+  }
 
   fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool) {
     self.buf.paint(tbox, at, active & self.mode.is_edit());
@@ -130,7 +140,7 @@ impl<B : Editable + Navigable> Editable for CommandBar<B> {
         '\n' => {
           if self.mode == Mode::Goto {
             if let Ok(line) = self.entry.trim().parse::<usize>() {
-              self.goto_line(if line > 0 { line - 1 } else { 0 });
+              self.buf.goto_line(if line > 0 { line - 1 } else { 0 });
             }
             self.entry.clear();
           }
@@ -151,47 +161,65 @@ impl<B : Editable + Navigable> Editable for CommandBar<B> {
 
 impl<B : Navigable> Navigable for CommandBar<B> {
   fn cursor_up(&mut self) -> &mut Self {
-    self.buf.cursor_up();
+    if self.mode.is_edit() {
+      self.buf.cursor_up();
+    }
     self
   }
 
   fn cursor_down(&mut self) -> &mut Self {
-    self.buf.cursor_down();
+    if self.mode.is_edit() {
+      self.buf.cursor_down();
+    }
     self
   }
 
   fn cursor_left(&mut self) -> &mut Self {
-    self.buf.cursor_left();
+    if self.mode.is_edit() {
+      self.buf.cursor_left();
+    }
     self
   }
 
   fn cursor_right(&mut self) -> &mut Self {
-    self.buf.cursor_right();
+    if self.mode.is_edit() {
+      self.buf.cursor_right();
+    }
     self
   }
 
   fn page_up(&mut self) -> &mut Self {
-    self.buf.page_up();
+    if self.mode.is_edit() {
+      self.buf.page_up();
+    }
     self
   }
 
   fn page_down(&mut self) -> &mut Self {
-    self.buf.page_down();
+    if self.mode.is_edit() {
+      self.buf.page_down();
+    }
     self
   }
 
   fn home(&mut self) -> &mut Self {
-    self.buf.home();
+    if self.mode.is_edit() {
+      self.buf.home();
+    }
     self
   }
 
   fn end(&mut self) -> &mut Self {
-    self.buf.end();
+    if self.mode.is_edit() {
+      self.buf.end();
+    }
     self
   }
 
   fn goto_line(&mut self, line: usize) -> &mut Self {
-    self.buf.goto_line(line);
+    if self.mode.is_edit() {
+      self.buf.goto_line(line);
+    }
     self
   }
 }
@@ -552,13 +580,16 @@ fn main() {
           if let Some(e) = tbox.pop_event() {
             match e {
               Event::Key(_, CTRL, Key::Char('Q')) => break 'arg_loop,
-              Event::Key(_, _, Key::Escape) => break 'event_loop,
+              Event::Key(_, _, Key::Escape) => {
+                cmd.pop_mode();
+                changed = true;
+              }
               Event::Key(_, CTRL, Key::Char('S')) => {
                 cmd.save().unwrap();
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('G')) => {
-                cmd.set_mode(Mode::Goto);
+                cmd.push_mode(Mode::Goto);
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('F')) => {

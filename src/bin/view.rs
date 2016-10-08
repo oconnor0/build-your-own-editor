@@ -1,7 +1,8 @@
 #![allow(dead_code)]
 extern crate textbox;
+use std::fs::{File, OpenOptions};
 use std::io;
-use std::io::{BufWriter, Error, ErrorKind, Write};
+use std::io::{BufRead, BufReader, BufWriter, Error, ErrorKind, Write};
 use std::path::PathBuf;
 use textbox::*;
 
@@ -241,9 +242,6 @@ impl<B: Save> Save for CommandBar<B> {
 
 impl FileEdit {
   fn from_file(v_size: Coord, filename: &str) -> Self {
-    use std::io::{BufRead, BufReader};
-    use std::fs::File;
-
     let path = PathBuf::from(filename);
     let mut lines = vec![];
 
@@ -271,8 +269,6 @@ impl FileEdit {
 
 impl Save for FileEdit {
   fn save(&mut self) -> io::Result<usize> {
-    use std::fs::OpenOptions;
-
     if self.dirty {
       if let Some(ref path) = self.path {
         let file = OpenOptions::new()

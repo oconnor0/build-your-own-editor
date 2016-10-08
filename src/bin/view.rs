@@ -32,6 +32,7 @@ trait Navigable {
 
 trait Editable {
   fn insert(&mut self, ch: char);
+  fn delete_line(&mut self) -> String;
 }
 
 struct FileEdit {
@@ -155,6 +156,16 @@ impl<B: Editable + Navigable> Editable for CommandBar<B> {
         '\x7f' => (), // delete - ignore
         _ => self.entry.push(ch),
       }
+    }
+  }
+
+  fn delete_line(&mut self) -> String {
+    if self.mode.is_edit() {
+      self.buf.delete_line()
+    } else {
+      let out = self.entry.to_string();
+      self.entry.clear();
+      out
     }
   }
 }
@@ -555,6 +566,24 @@ impl Editable for FileEdit {
       }
     }
   }
+
+  fn delete_line(&mut self) -> String {
+    self.dirty = true;
+    let curr_row = self.offset.1 + self.cursor.1;
+    let curr_col = self.offset.0 + self.cursor.0;
+    let curr_str = self.lines.remove(curr_row);
+    if self.lines.len() == 0 {
+      self.lines.push(String::new());
+    }
+    if curr_row >= self.lines.len() {
+      self.cursor_up();
+    }
+    let curr_row = self.offset.1 + self.cursor.1;
+    if curr_col >= self.lines[curr_row].len() {
+      self.end();
+    }
+    curr_str
+  }
 }
 
 fn main() {
@@ -593,6 +622,10 @@ fn main() {
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('F')) => {
+                changed = true;
+              }
+              Event::Key(_, CTRL, Key::Char('X')) => {
+                cmd.delete_line();
                 changed = true;
               }
               Event::Key(_, _, Key::Up) |

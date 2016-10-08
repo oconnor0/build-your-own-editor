@@ -18,17 +18,17 @@ trait Save {
 }
 
 trait Navigable {
-  fn cursor_up(&mut self) -> &mut Self;
-  fn cursor_down(&mut self) -> &mut Self;
-  fn cursor_left(&mut self) -> &mut Self;
-  fn cursor_right(&mut self) -> &mut Self;
+  fn cursor_up(&mut self);
+  fn cursor_down(&mut self);
+  fn cursor_left(&mut self);
+  fn cursor_right(&mut self);
 
-  fn page_up(&mut self) -> &mut Self;
-  fn page_down(&mut self) -> &mut Self;
-  fn home(&mut self) -> &mut Self;
-  fn end(&mut self) -> &mut Self;
+  fn page_up(&mut self);
+  fn page_down(&mut self);
+  fn home(&mut self);
+  fn end(&mut self);
 
-  fn goto_line(&mut self, line: usize) -> &mut Self;
+  fn goto_line(&mut self, line: usize);
 }
 
 trait Editable {
@@ -76,19 +76,15 @@ impl<B> CommandBar<B> {
     }
   }
 
-  fn push_mode(&mut self, mode: Mode) -> &mut Self {
-    self.mode = mode;
-    self
-  }
+  fn push_mode(&mut self, mode: Mode) { self.mode = mode; }
 
 
-  fn pop_mode(&mut self) -> &mut Self {
+  fn pop_mode(&mut self) {
     self.mode = match self.mode {
       Mode::Edit => Mode::Edit,
       Mode::Find => Mode::Edit,
       Mode::Goto => Mode::Edit,
     };
-    self
   }
 }
 
@@ -172,67 +168,58 @@ impl<B: Editable + Navigable> Editable for CommandBar<B> {
 }
 
 impl<B: Navigable> Navigable for CommandBar<B> {
-  fn cursor_up(&mut self) -> &mut Self {
+  fn cursor_up(&mut self) {
     if self.mode.is_edit() {
       self.buf.cursor_up();
     }
-    self
   }
 
-  fn cursor_down(&mut self) -> &mut Self {
+  fn cursor_down(&mut self) {
     if self.mode.is_edit() {
       self.buf.cursor_down();
     }
-    self
   }
 
-  fn cursor_left(&mut self) -> &mut Self {
+  fn cursor_left(&mut self) {
     if self.mode.is_edit() {
       self.buf.cursor_left();
     }
-    self
   }
 
-  fn cursor_right(&mut self) -> &mut Self {
+  fn cursor_right(&mut self) {
     if self.mode.is_edit() {
       self.buf.cursor_right();
     }
-    self
   }
 
-  fn page_up(&mut self) -> &mut Self {
+  fn page_up(&mut self) {
     if self.mode.is_edit() {
       self.buf.page_up();
     }
-    self
   }
 
-  fn page_down(&mut self) -> &mut Self {
+  fn page_down(&mut self) {
     if self.mode.is_edit() {
       self.buf.page_down();
     }
-    self
   }
 
-  fn home(&mut self) -> &mut Self {
+  fn home(&mut self) {
     if self.mode.is_edit() {
       self.buf.home();
     }
-    self
   }
 
-  fn end(&mut self) -> &mut Self {
+  fn end(&mut self) {
     if self.mode.is_edit() {
       self.buf.end();
     }
-    self
   }
 
-  fn goto_line(&mut self, line: usize) -> &mut Self {
+  fn goto_line(&mut self, line: usize) {
     if self.mode.is_edit() {
       self.buf.goto_line(line);
     }
-    self
   }
 }
 
@@ -350,7 +337,7 @@ impl Buffer for FileEdit {
 }
 
 impl Navigable for FileEdit {
-  fn cursor_up(&mut self) -> &mut Self {
+  fn cursor_up(&mut self) {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
     } else if self.cursor.row() == 0 {
@@ -363,11 +350,9 @@ impl Navigable for FileEdit {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
-
-    self
   }
 
-  fn cursor_down(&mut self) -> &mut Self {
+  fn cursor_down(&mut self) {
     if self.offset.row() + self.cursor.row() >= self.lines.len() - 1 {
       // do nothing
     } else if self.cursor.row() >= self.v_size.row() - 1 {
@@ -381,11 +366,9 @@ impl Navigable for FileEdit {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
-
-    self
   }
 
-  fn cursor_left(&mut self) -> &mut Self {
+  fn cursor_left(&mut self) {
     if self.offset.0 + self.cursor.0 == 0 {
       if self.offset.1 + self.cursor.1 > 0 {
         self.cursor_up();
@@ -396,11 +379,9 @@ impl Navigable for FileEdit {
     } else {
       self.cursor.0 -= 1;
     }
-
-    self
   }
 
-  fn cursor_right(&mut self) -> &mut Self {
+  fn cursor_right(&mut self) {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
     let view_cols = self.v_size.0;
@@ -419,11 +400,9 @@ impl Navigable for FileEdit {
     } else {
       self.cursor.0 += 1;
     }
-
-    self
   }
 
-  fn page_up(&mut self) -> &mut Self {
+  fn page_up(&mut self) {
     if self.offset.row() + self.cursor.row() == 0 {
       // do nothing
     } else if self.offset.1 == 0 {
@@ -441,11 +420,9 @@ impl Navigable for FileEdit {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
-
-    self
   }
 
-  fn page_down(&mut self) -> &mut Self {
+  fn page_down(&mut self) {
     if self.offset.1 + self.cursor.1 >= self.lines.len() - 1 {
       // do nothing
     } else if self.lines.len() < self.v_size.1 {
@@ -463,18 +440,14 @@ impl Navigable for FileEdit {
        self.lines[self.offset.1 + self.cursor.1].len() {
       self.end();
     }
-
-    self
   }
 
-  fn home(&mut self) -> &mut Self {
+  fn home(&mut self) {
     self.offset.0 = 0;
     self.cursor.0 = 0;
-
-    self
   }
 
-  fn end(&mut self) -> &mut Self {
+  fn end(&mut self) {
     let offset_row = self.offset.1;
     let cursor_row = self.cursor.1;
     let view_cols = self.v_size.0;
@@ -487,11 +460,9 @@ impl Navigable for FileEdit {
       self.offset.0 = line_len + 1 - view_cols;
       self.cursor.0 = view_cols - 1;
     }
-
-    self
   }
 
-  fn goto_line(&mut self, line: usize) -> &mut Self {
+  fn goto_line(&mut self, line: usize) {
     let len = self.lines.len();
     let line = if line >= len { len - 1 } else { line };
     if line < self.v_size.1 {
@@ -500,8 +471,6 @@ impl Navigable for FileEdit {
     } else {
       self.offset.1 = line - self.cursor.1;
     }
-
-    self
   }
 }
 
@@ -597,112 +566,57 @@ fn main() {
     tbox.present();
 
     {
-      // let mut ch = ' ';
-      let mut changed = false;
-      // let mut x = 0;
       'event_loop: loop {
         {
           if let Some(e) = tbox.pop_event() {
             match e {
               Event::Key(_, CTRL, Key::Char('Q')) => break 'arg_loop,
-              Event::Key(_, NO_MODS, Key::Escape) => {
-                cmd.pop_mode();
-                changed = true;
-              }
+              Event::Key(_, NO_MODS, Key::Escape) => cmd.pop_mode(),
               Event::Key(_, CTRL, Key::Char('S')) => {
                 cmd.save().unwrap();
-                changed = true;
               }
-              Event::Key(_, CTRL, Key::Char('G')) => {
-                cmd.push_mode(Mode::Goto);
-                changed = true;
-              }
-              Event::Key(_, CTRL, Key::Char('F')) => {
-                changed = true;
-              }
+              Event::Key(_, CTRL, Key::Char('G')) => cmd.push_mode(Mode::Goto),
+              Event::Key(_, CTRL, Key::Char('F')) => cmd.push_mode(Mode::Find),
               Event::Key(_, CTRL, Key::Char('X')) => {
                 cmd.delete_line();
-                changed = true;
               }
               Event::Key(_, NO_MODS, Key::Up) |
-              Event::Key(_, CTRL, Key::Char('K')) => {
-                cmd.cursor_up();
-                changed = true;
-              }
+              Event::Key(_, CTRL, Key::Char('K')) => cmd.cursor_up(),
               Event::Key(_, NO_MODS, Key::Down) |
-              Event::Key(_, CTRL, Key::Char('J')) => {
-                cmd.cursor_down();
-                changed = true;
-              }
+              Event::Key(_, CTRL, Key::Char('J')) => cmd.cursor_down(),
               Event::Key(_, NO_MODS, Key::Left) |
-              Event::Key(_, CTRL, Key::Char('H')) => {
-                cmd.cursor_left();
-                changed = true;
-              }
+              Event::Key(_, CTRL, Key::Char('H')) => cmd.cursor_left(),
               Event::Key(_, NO_MODS, Key::Right) |
-              Event::Key(_, CTRL, Key::Char('L')) => {
-                cmd.cursor_right();
-                changed = true;
-              }
+              Event::Key(_, CTRL, Key::Char('L')) => cmd.cursor_right(),
               Event::Key(_, NO_MODS, Key::PageUp) |
-              Event::Key(_, CTRL_SHIFT, Key::Char('K')) => {
-                cmd.page_up();
-                changed = true;
-              }
+              Event::Key(_, CTRL_SHIFT, Key::Char('K')) => cmd.page_up(),
               Event::Key(_, NO_MODS, Key::PageDown) |
-              Event::Key(_, CTRL_SHIFT, Key::Char('J')) => {
-                cmd.page_down();
-                changed = true;
-              }
+              Event::Key(_, CTRL_SHIFT, Key::Char('J')) => cmd.page_down(),
               Event::Key(_, NO_MODS, Key::Home) |
-              Event::Key(_, CTRL_SHIFT, Key::Char('H')) => {
-                cmd.home();
-                changed = true;
-              }
+              Event::Key(_, CTRL_SHIFT, Key::Char('H')) => cmd.home(),
               Event::Key(_, NO_MODS, Key::End) |
-              Event::Key(_, CTRL_SHIFT, Key::Char('L')) => {
-                cmd.end();
-                changed = true;
-              }
+              Event::Key(_, CTRL_SHIFT, Key::Char('L')) => cmd.end(),
               // Event::Key('/', ALT, _) => {
               //   println!("divide");
               //   cmd.insert(0xf7 as char);
-              //   changed = true;
               // }
               Event::Key(ch, NO_MODS, Key::Char(_)) |
-              Event::Key(ch, SHIFT, Key::Char(_)) => {
-                cmd.insert(ch);
-                changed = true;
-              }
-              Event::Key(_, NO_MODS, Key::Enter) => {
-                cmd.insert('\n');
-                changed = true;
-              }
-              Event::Key(_, NO_MODS, Key::Backspace) => {
-                cmd.insert('\x08');
-                changed = true;
-              }
-              Event::Key(_, NO_MODS, Key::Delete) => {
-                cmd.insert('\x7f');
-                changed = true;
-              }
+              Event::Key(ch, SHIFT, Key::Char(_)) => cmd.insert(ch),
+              Event::Key(_, NO_MODS, Key::Enter) => cmd.insert('\n'),
+              Event::Key(_, NO_MODS, Key::Backspace) => cmd.insert('\x08'),
+              Event::Key(_, NO_MODS, Key::Delete) => cmd.insert('\x7f'),
               Event::Key(_, NO_MODS, Key::Tab) => {
                 cmd.insert(' ');
                 cmd.insert(' ');
-                changed = true;
               }
               _ => (),
             }
           }
         }
-        {
-          if changed {
-            tbox.clear();
-            cmd.paint(&mut tbox, zero(), true);
-            changed = false;
-            tbox.present();
-          }
-        }
+
+        tbox.clear();
+        cmd.paint(&mut tbox, zero(), true);
+        tbox.present();
       }
     }
   }

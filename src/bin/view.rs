@@ -605,7 +605,7 @@ fn main() {
           if let Some(e) = tbox.pop_event() {
             match e {
               Event::Key(_, CTRL, Key::Char('Q')) => break 'arg_loop,
-              Event::Key(_, _, Key::Escape) => {
+              Event::Key(_, NO_MODS, Key::Escape) => {
                 cmd.pop_mode();
                 changed = true;
               }
@@ -624,63 +624,69 @@ fn main() {
                 cmd.delete_line();
                 changed = true;
               }
-              Event::Key(_, _, Key::Up) |
+              Event::Key(_, NO_MODS, Key::Up) |
               Event::Key(_, CTRL, Key::Char('K')) => {
                 cmd.cursor_up();
                 changed = true;
               }
-              Event::Key(_, _, Key::Down) |
+              Event::Key(_, NO_MODS, Key::Down) |
               Event::Key(_, CTRL, Key::Char('J')) => {
                 cmd.cursor_down();
                 changed = true;
               }
-              Event::Key(_, _, Key::Left) |
+              Event::Key(_, NO_MODS, Key::Left) |
               Event::Key(_, CTRL, Key::Char('H')) => {
                 cmd.cursor_left();
                 changed = true;
               }
-              Event::Key(_, _, Key::Right) |
+              Event::Key(_, NO_MODS, Key::Right) |
               Event::Key(_, CTRL, Key::Char('L')) => {
                 cmd.cursor_right();
                 changed = true;
               }
-              Event::Key(_, _, Key::PageUp) |
+              Event::Key(_, NO_MODS, Key::PageUp) |
               Event::Key(_, CTRL_SHIFT, Key::Char('K')) => {
                 cmd.page_up();
                 changed = true;
               }
-              Event::Key(_, _, Key::PageDown) |
+              Event::Key(_, NO_MODS, Key::PageDown) |
               Event::Key(_, CTRL_SHIFT, Key::Char('J')) => {
                 cmd.page_down();
                 changed = true;
               }
-              Event::Key(_, _, Key::Home) |
+              Event::Key(_, NO_MODS, Key::Home) |
               Event::Key(_, CTRL_SHIFT, Key::Char('H')) => {
                 cmd.home();
                 changed = true;
               }
-              Event::Key(_, _, Key::End) |
+              Event::Key(_, NO_MODS, Key::End) |
               Event::Key(_, CTRL_SHIFT, Key::Char('L')) => {
                 cmd.end();
                 changed = true;
               }
-              Event::Key(ch, _, Key::Char(_)) => {
+              // Event::Key('/', ALT, _) => {
+              //   println!("divide");
+              //   cmd.insert(0xf7 as char);
+              //   changed = true;
+              // }
+              Event::Key(ch, NO_MODS, Key::Char(_)) |
+              Event::Key(ch, SHIFT, Key::Char(_)) => {
                 cmd.insert(ch);
                 changed = true;
               }
-              Event::Key(_, _, Key::Enter) => {
+              Event::Key(_, NO_MODS, Key::Enter) => {
                 cmd.insert('\n');
                 changed = true;
               }
-              Event::Key(_, _, Key::Backspace) => {
+              Event::Key(_, NO_MODS, Key::Backspace) => {
                 cmd.insert('\x08');
                 changed = true;
               }
-              Event::Key(_, _, Key::Delete) => {
+              Event::Key(_, NO_MODS, Key::Delete) => {
                 cmd.insert('\x7f');
                 changed = true;
               }
-              Event::Key(_, _, Key::Tab) => {
+              Event::Key(_, NO_MODS, Key::Tab) => {
                 cmd.insert(' ');
                 cmd.insert(' ');
                 changed = true;

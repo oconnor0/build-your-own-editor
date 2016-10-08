@@ -43,12 +43,24 @@ struct FileEdit {
   dirty: bool,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+enum Mode {
+  Edit,
+  Find,
+  Goto,
+}
+
+impl Mode {
+  fn is_edit(&self) -> bool { *self == Mode::Edit }
+  fn is_cmd(&self) -> bool { *self == Mode::Find || *self == Mode::Goto }
+}
+
 struct CommandBar<B> {
   prompt: String,
   entry: String,
   v_size: Coord,
   buf: Box<B>,
-  edit_mode: bool,
+  mode: Mode,
 }
 
 impl<B> CommandBar<B> {
@@ -58,17 +70,28 @@ impl<B> CommandBar<B> {
       entry: String::new(),
       v_size: v_size,
       buf: Box::new(buf),
-      edit_mode: true,
+      mode: Mode::Edit,
     }
+  }
+
+  fn set_mode(&mut self, mode: Mode) -> &mut Self {
+    self.mode = mode;
+    self
   }
 }
 
 impl<B : Buffer> Buffer for CommandBar<B> {
   fn name(&self) -> &str { &"command bar" }
-  fn status(&self) -> String { "command bar".to_string() }
+  fn status(&self) -> String {
+    match self.mode {
+      Mode::Edit => "*edit*".to_string(),
+      Mode::Find => "*find*".to_string(),
+      Mode::Goto => "*goto*".to_string(),
+    }
+   }
 
   fn paint(&self, tbox: &mut Textbox, at: Coord, active: bool) {
-    self.buf.paint(tbox, at, active & self.edit_mode);
+    self.buf.paint(tbox, at, active & self.mode.is_edit());
     let at = at + (self.buf.view_size().row() + 1).to_row();
 
     let Coord(cols, rows) = tbox.size();
@@ -81,8 +104,10 @@ impl<B : Buffer> Buffer for CommandBar<B> {
                    &status,
                    DEFAULT,
                    DEFAULT | REVERSE);
+    let status = self.status();
+    tbox.set_cells(Coord(2, rows - 2), &status, DEFAULT, DEFAULT | REVERSE);
 
-    if active & !self.edit_mode {
+    if active & self.mode.is_cmd() {
       tbox.set_cells(at, &self.prompt, DEFAULT, DEFAULT);
       let at = at + self.prompt.len().to_col() + 1.to_col();
       tbox.set_cells(at, &self.entry, DEFAULT, DEFAULT);
@@ -96,14 +121,20 @@ impl<B : Buffer> Buffer for CommandBar<B> {
   }
 }
 
-impl<B : Editable> Editable for CommandBar<B> {
+impl<B : Editable + Navigable> Editable for CommandBar<B> {
   fn insert(&mut self, ch: char) {
-    if self.edit_mode {
+    if self.mode.is_edit() {
       self.buf.insert(ch);
     } else {
       match ch {
         '\n' => {
-          println!("done typing command, call handler!");
+          if self.mode == Mode::Goto {
+            if let Ok(line) = self.entry.trim().parse::<usize>() {
+              self.goto_line(if line > 0 { line - 1 } else { 0 });
+            }
+            self.entry.clear();
+          }
+          self.mode = Mode::Edit;
         }
         '\x08' => {
           // backspace
@@ -509,8 +540,7 @@ fn main() {
 
     let buf = FileEdit::from_file(size - 2.to_row(), &arg);
     let mut cmd = CommandBar::new(Coord(size.col(), 1), buf);
-    let mut edit_mode = true;
-    cmd.paint(&mut tbox, zero(), edit_mode);
+    cmd.paint(&mut tbox, zero(), true);
     tbox.present();
 
     {
@@ -528,7 +558,7 @@ fn main() {
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('G')) => {
-                edit_mode = false;
+                cmd.set_mode(Mode::Goto);
                 changed = true;
               }
               Event::Key(_, CTRL, Key::Char('F')) => {
@@ -602,7 +632,7 @@ fn main() {
         {
           if changed {
             tbox.clear();
-            cmd.paint(&mut tbox, zero(), edit_mode);
+            cmd.paint(&mut tbox, zero(), true);
             changed = false;
             tbox.present();
           }

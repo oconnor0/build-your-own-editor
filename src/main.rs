@@ -238,7 +238,7 @@ fn main() {
             buf.home();
             changed = true;
           }
-          Some(Event::Key(c, k, m)) => {
+          Some(Event::Key(_, _, _)) => {
             // println!("({:?}, {:?}, {:?})", c, k, m);
             // ch = c;
             changed = true;

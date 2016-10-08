@@ -70,13 +70,37 @@ fn to_event(raw: RawEvent) -> Option<Event> {
       kc if kc == TB_KEY_END => Key::End,
       kc if kc == TB_KEY_PGUP => Key::PageUp,
       kc if kc == TB_KEY_PGDN => Key::PageDown,
-      kc if kc == TB_KEY_BACKSPACE || kc == TB_KEY_BACKSPACE2 => Key::Backspace,
+      kc if /*kc == TB_KEY_BACKSPACE || */kc == TB_KEY_BACKSPACE2 => Key::Backspace,
       kc if kc == TB_KEY_DELETE => Key::Delete,
       kc if kc == TB_KEY_TAB => Key::Tab,
       kc if kc == TB_KEY_ENTER => Key::Enter,
       kc if kc == TB_KEY_SPACE => {
         ch = ' ';
         Key::Char(' ')
+      }
+      kc if kc == TB_KEY_CTRL_F => {
+        mods |= CTRL;
+        Key::Char('F')
+      }
+      kc if kc == TB_KEY_CTRL_G => {
+        mods |= CTRL;
+        Key::Char('G')
+      }
+      kc if kc == TB_KEY_CTRL_H => {
+        mods |= CTRL;
+        Key::Char('H')
+      }
+      kc if kc == TB_KEY_CTRL_J => {
+        mods |= CTRL;
+        Key::Char('J')
+      }
+      kc if kc == TB_KEY_CTRL_K => {
+        mods |= CTRL;
+        Key::Char('K')
+      }
+      kc if kc == TB_KEY_CTRL_L => {
+        mods |= CTRL;
+        Key::Char('L')
       }
       kc if kc == TB_KEY_CTRL_S => {
         mods |= CTRL;

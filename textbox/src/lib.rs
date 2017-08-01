@@ -67,23 +67,23 @@ mod types {
   }
 
   bitflags! {
-    pub flags Mod: u32 {
-      const NO_MODS     = 0,
+    pub struct Mod: u16 {
+      const NO_MODS     = 0;
 
       // const RIGHT_ALT   = 0x0001,
       // const LEFT_ALT    = 0x0002,
-      const ALT         = 0x0003, //RIGHT_ALT.bits|LEFT_ALT.bits,
+      const ALT         = 0x0003; //RIGHT_ALT.bits|LEFT_ALT.bits,
 
       // const RIGHT_CTRL  = 0x0004,
       // const LEFT_CTRL   = 0x0008,
-      const CTRL        = 0x000c, //RIGHT_CTRL.bits|LEFT_CTRL.bits,
+      const CTRL        = 0x000c; //RIGHT_CTRL.bits|LEFT_CTRL.bits,
 
-      const SHIFT       = 0x0010,
+      const SHIFT       = 0x0010;
 
-      const ALT_CTRL    = ALT.bits|CTRL.bits,
-      const ALT_SHIFT   = ALT.bits|SHIFT.bits,
-      const CTRL_SHIFT  = CTRL.bits|SHIFT.bits,
-      const ALT_CTRL_SHIFT = ALT.bits|CTRL.bits|SHIFT.bits,
+      const ALT_CTRL    = ALT.bits|CTRL.bits;
+      const ALT_SHIFT   = ALT.bits|SHIFT.bits;
+      const CTRL_SHIFT  = CTRL.bits|SHIFT.bits;
+      const ALT_CTRL_SHIFT = ALT.bits|CTRL.bits|SHIFT.bits;
 
       // const CAPS_LOCK   = 0x0020,
       // const NUM_LOCK    = 0x0040,
@@ -120,22 +120,23 @@ mod types {
   }
 
   bitflags! {
-     pub flags Style: u16 {
-       const DEFAULT   = 0x8000,
+     pub struct Style: u16 {
+       const DEFAULT   = 0x8000;
 
-       const BLACK     = 0x0001,
-       const RED       = 0x0002,
-       const GREEN     = 0x0004,
-       const YELLOW    = 0x0008,
-       const BLUE      = 0x0010,
-       const MAGENTA   = 0x0020,
-       const CYAN      = 0x0040,
-       const WHITE     = 0x0080,
-       const BRIGHT    = 0x0100,
+       const BLACK     = 0x0001;
+       const RED       = 0x0002;
+       const GREEN     = 0x0004;
+       const YELLOW    = 0x0008;
+       const BLUE      = 0x0010;
 
-       const BOLD      = 0x0200,
-       const UNDERLINE = 0x0400,
-       const REVERSE   = 0x0800,
+       const MAGENTA   = 0x0020;
+       const CYAN      = 0x0040;
+       const WHITE     = 0x0080;
+
+       const BRIGHT    = 0x0100;
+       const BOLD      = 0x0200;
+       const UNDERLINE = 0x0400;
+       const REVERSE   = 0x0800;
      }
   }
 
